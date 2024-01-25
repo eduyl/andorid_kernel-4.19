@@ -241,3 +241,4 @@ obj-$(CONFIG_MFD_SC27XX_PMIC)	+= sprd-sc27xx-spi.o
 obj-$(CONFIG_RAVE_SP_CORE)	+= rave-sp.o
 obj-$(CONFIG_MFD_ROHM_BD718XX)	+= rohm-bd718x7.o
 
+obj-$(CONFIG_MFD_SM5703)	+= sm5703_core.o sm5703_irq.o

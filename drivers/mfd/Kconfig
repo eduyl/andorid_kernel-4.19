@@ -10,13 +10,24 @@ config MFD_CORE
 	select IRQ_DOMAIN
 	default n
 
+config MFD_SM5703
+	bool "Silicon Mitus SM5703 PMIC Support"
+	depends on I2C=y
+	select MFD_CORE
+	help
+	  Say yes here to support for Silicon Mitus SM5703.
+	  This is a Power Management IC with LDO, RGB(SVC led)
+	  controls on chip.
+	  This driver provides common support for accessing the device;
+	  additional drivers
+
 config MFD_CS5535
 	tristate "AMD CS5535 and CS5536 southbridge core functions"
 	select MFD_CORE
 	depends on PCI && (X86_32 || (X86 && COMPILE_TEST))
-	---help---
+	help
 	  This is the core driver for CS5535/CS5536 MFD functions.  This is
-          necessary for using the board's GPIO and MFGPT functionality.
+	  necessary for using the board's GPIO and MFGPT functionality.
 
 config MFD_ALTERA_A10SR
 	bool "Altera Arria10 DevKit System Resource chip"
@@ -203,14 +214,13 @@ config MFD_CROS_EC
 	  protocol for talking to the EC is defined by the bus driver.
 
 config MFD_CROS_EC_CHARDEV
-        tristate "Chrome OS Embedded Controller userspace device interface"
-        depends on MFD_CROS_EC
-        select CROS_EC_CTL
-        ---help---
-          This driver adds support to talk with the ChromeOS EC from userspace.
-
-          If you have a supported Chromebook, choose Y or M here.
-          The module will be called cros_ec_dev.
+	tristate "Chrome OS Embedded Controller userspace device interface"
+	depends on MFD_CROS_EC
+	select CROS_EC_CTL
+	help
+	  This driver adds support to talk with the ChromeOS EC from userspace.
+	  If you have a supported Chromebook, choose Y or M here.
+	  The module will be called cros_ec_dev.
 
 config MFD_MADERA
 	tristate "Cirrus Logic Madera codecs"
@@ -266,7 +276,7 @@ config MFD_ASIC3
 	bool "Compaq ASIC3"
 	depends on GPIOLIB && ARM
 	select MFD_CORE
-	 ---help---
+	help
 	  This driver supports the ASIC3 multifunction chip found on many
 	  PDAs (mainly iPAQ and HTC based ones)
 
@@ -1049,7 +1059,7 @@ config MFD_SI476X_CORE
 
 config MFD_SM501
 	tristate "Silicon Motion SM501"
-	 ---help---
+	help
 	  This is the core driver for the Silicon Motion SM501 multimedia
 	  companion chip. This device is a multifunction device which may
 	  provide numerous interfaces including USB host controller, USB gadget,
@@ -1060,7 +1070,7 @@ config MFD_SM501
 config MFD_SM501_GPIO
 	bool "Export GPIO via GPIO layer"
 	depends on MFD_SM501 && GPIOLIB
-	 ---help---
+	help
 	 This option uses the gpio library layer to export the 64 GPIO
 	 lines on the SM501. The platform data is used to supply the
 	 base number for the first GPIO line to register.
@@ -1612,12 +1622,12 @@ config MFD_TIMBERDALE
 	tristate "Timberdale FPGA"
 	select MFD_CORE
 	depends on PCI && GPIOLIB && (X86_32 || COMPILE_TEST)
-	---help---
-	This is the core driver for the timberdale FPGA. This device is a
-	multifunction device which exposes numerous platform devices.
+	help
+	  This is the core driver for the timberdale FPGA. This device is a
+	  multifunction device which exposes numerous platform devices.
 
-	The timberdale FPGA can be found on the Intel Atom development board
-	for in-vehicle infontainment, called Russellville.
+	  The timberdale FPGA can be found on the Intel Atom development board
+	  for in-vehicle infontainment, called Russellville.
 
 config MFD_TC3589X
 	bool "Toshiba TC35892 and variants"

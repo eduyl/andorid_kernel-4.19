@@ -8,6 +8,22 @@ menuconfig POWER_SUPPLY
 
 if POWER_SUPPLY
 
+config BATTERY_SAMSUNG
+	tristate "samsung battery driver"
+	help
+	 Say Y to include support for samsung battery driver
+	 This battery driver integrated all battery-related functions
+	 To see battery-related functions,
+	 refer to sec_charging_common.h
+
+config CHARGER_SM5703
+	tristate "SM5703 battery charger support"
+	depends on MFD_SM5703 && I2C
+	help
+	  Say Y here to enable support for the SM5703 charger
+	  SM5703 incluse led, flash driver.
+	  You have to define MFD_SM5703
+
 config POWER_SUPPLY_DEBUG
 	bool "Power supply debug"
 	help

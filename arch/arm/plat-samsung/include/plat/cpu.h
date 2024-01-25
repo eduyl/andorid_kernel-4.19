@@ -32,6 +32,43 @@ extern unsigned long samsung_cpu_id;
 #define S5PV210_CPU_ID		0x43110000
 #define S5PV210_CPU_MASK	0xFFFFF000
 
+#if defined(CONFIG_SOC_EXYNOS5250)
+# define soc_is_exynos5250()	is_samsung_exynos5250()
+#else
+# define soc_is_exynos5250()	0
+#endif
+
+#if defined(CONFIG_SOC_EXYNOS5422)
+# define soc_is_exynos5422()	is_samsung_exynos5422()
+#else
+# define soc_is_exynos5422()	0
+#endif
+
+#if defined(CONFIG_SOC_EXYNOS5430)
+# define soc_is_exynos5430()	is_samsung_exynos5430()
+#else
+# define soc_is_exynos5430()	0
+#endif
+
+#define EXYNOS5430_REV_1_0	(0x10)
+
+#if defined(CONFIG_SOC_EXYNOS5433)
+# define soc_is_exynos5433()	is_samsung_exynos5433()
+#else
+# define soc_is_exynos5433()	0
+#endif
+
+#define EXYNOS5433_REV_0	(0x0)
+#define EXYNOS5433_REV_1_0	(0x10)
+#define EXYNOS5433_REV_1_1	(0x11)
+
+#if defined(CONFIG_SOC_EXYNOS5440)
+# define soc_is_exynos5440()	is_samsung_exynos5440()
+#else
+# define soc_is_exynos5440()	0
+#endif
+
+
 #define IS_SAMSUNG_CPU(name, id, mask)		\
 static inline int is_samsung_##name(void)	\
 {						\

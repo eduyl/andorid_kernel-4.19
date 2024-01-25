@@ -21,4 +21,7 @@ config EXYNOS_PM_DOMAINS
 	bool "Exynos PM domains" if COMPILE_TEST
 	depends on PM_GENERIC_DOMAINS || COMPILE_TEST
 
+config MACH_UNIVERSAL5433
+	bool "Exynos universal 5433"
+
 endif
