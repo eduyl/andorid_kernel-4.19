@@ -23,6 +23,15 @@ config CHARGER_SM5703
 	  Say Y here to enable support for the SM5703 charger
 	  SM5703 incluse led, flash driver.
 	  You have to define MFD_SM5703
+	  
+config FUELGAUGE_SM5703
+	 tristate "SM5703 fuel gauge driver"
+	 default n
+	 depends on BATTERY_SAMSUNG
+	 help
+	  Say Y to include support SM5703 FUELGAUGE.
+	  Using coulomb counting.
+
 
 config POWER_SUPPLY_DEBUG
 	bool "Power supply debug"
