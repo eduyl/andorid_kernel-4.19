@@ -286,7 +286,7 @@ static irqreturn_t sm5703_irq_handler(int irq, void *data)
 
 
 	printk("SM5703 IRQ triggered\n");
-	__pm_wakeup_event(&chip->irq_wake_lock, msecs_to_jiffies(500));
+	__pm_wakeup_event(chip->irq_wake_lock, msecs_to_jiffies(500));
 	mutex_lock(&chip->suspend_flag_lock);
 	if (chip->suspend_flag) {
 		printk("I2C host controller might not be ready,"
@@ -365,7 +365,7 @@ int sm5703_init_irq(sm5703_mfd_chip_t *chip)
 				handle_simple_irq);
 		irq_set_nested_thread(curr_irq, 1);
 #ifdef CONFIG_ARM
-		set_irq_flags(curr_irq, IRQF_VALID);
+		irq_set_status_flags(curr_irq, !IRQ_NOREQUEST); //https://patchwork.kernel.org/project/linux-omap/patch/1436711211-18223-2-git-send-email-robh@kernel.org/
 #else
 		irq_set_noprobe(curr_irq);
 #endif

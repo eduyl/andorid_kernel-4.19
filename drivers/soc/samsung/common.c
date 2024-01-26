@@ -1617,7 +1617,7 @@ static int __init exynos_init_irq_eint(void)
 	for (irq = 0 ; irq <= 31 ; irq++) {
 		irq_set_chip_and_handler(IRQ_EINT(irq), &exynos_irq_eint,
 					 handle_level_irq);
-		set_irq_flags(IRQ_EINT(irq), IRQF_VALID);
+		irq_set_status_flags(IRQ_EINT(irq), !IRQ_NOREQUEST);
 	}
 
 	irq_set_chained_handler(EXYNOS_IRQ_EINT16_31, exynos_irq_demux_eint16_31);
