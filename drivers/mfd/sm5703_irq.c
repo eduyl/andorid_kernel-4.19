@@ -411,7 +411,7 @@ err_gpio_request:
 			curr_irq < chip->irq_base + SM5703_IRQS_NR;
 			curr_irq++) {
 #ifdef CONFIG_ARM
-		set_irq_flags(curr_irq, 0);
+		irq_set_status_flags(curr_irq, 0);
 #endif
 		irq_set_chip_and_handler(curr_irq, NULL, NULL);
 		irq_set_chip_data(curr_irq, NULL);
@@ -431,7 +431,7 @@ int sm5703_exit_irq(sm5703_mfd_chip_t *chip)
 			curr_irq < chip->irq_base + SM5703_IRQS_NR;
 			curr_irq++) {
 #ifdef CONFIG_ARM
-		set_irq_flags(curr_irq, 0);
+		irq_set_status_flags(curr_irq, 0);
 #endif
 		irq_set_chip_and_handler(curr_irq, NULL, NULL);
 		irq_set_chip_data(curr_irq, NULL);
