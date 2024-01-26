@@ -74,7 +74,7 @@ typedef struct sm5703_charger_data {
 	struct power_supply	psy_otg;
 	sm5703_charger_platform_data_t *pdata;
 	int charging_current;
-	struct wakeup_source vbuslimit_wake_lock;
+	struct wakeup_source *vbuslimit_wake_lock;
 	struct delayed_work vbuslimit_work;
 	int	current_max;
 	bool is_current_reduced;
@@ -92,7 +92,7 @@ typedef struct sm5703_charger_data {
 	bool is_mdock;
 	struct workqueue_struct *wq;
 #if EN_OTGFAIL_IRQ	
-	struct wakeup_source otg_fail_wake_lock;
+	struct wakeup_source *otg_fail_wake_lock;
 	struct work_struct otg_fail_work;
 #endif
 	int status;
