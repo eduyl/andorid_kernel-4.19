@@ -135,7 +135,7 @@ struct sm5703_mfd_chip {
 	struct mutex io_lock;
 	struct mutex irq_lock;
 	struct mutex suspend_flag_lock;
-	struct wakeup_source irq_wake_lock;
+	struct wakeup_source *irq_wake_lock;
 	/* prev IRQ status and now IRQ_status*/
 	sm5703_irq_status_t irq_status[4];
 	/* irq_status_index ^= 0x01; after access irq*/

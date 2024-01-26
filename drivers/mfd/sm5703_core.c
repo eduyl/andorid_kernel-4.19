@@ -438,7 +438,7 @@ static int sm5703_mfd_probe(struct i2c_client *i2c,
 		pr_info("%s : Request GPIO %d failed\n",
 				__func__, (int)pdata->mrstb_gpio);
 
-	&chip->irq_wake_lock = wakeup_source_create("sm5703mfd_wakelock");
+	chip->irq_wake_lock = wakeup_source_create("sm5703mfd_wakelock");
 
 	ret = sm5703_init_irq(chip);
 
@@ -512,7 +512,7 @@ err_add_fled_devs:
 err_add_regulator_devs:
 #endif /*CONFIG_REGULATOR_SM5703*/
 err_init_irq:
-	wakeup_source_destroy(&(chip->irq_wake_lock));
+	wakeup_source_destroy(chip->irq_wake_lock);
 	mutex_destroy(&chip->io_lock);
 irq_base_err:
 err_i2cfunc_not_support:
@@ -531,7 +531,7 @@ static int sm5703_mfd_remove(struct i2c_client *i2c)
 	pr_info("%s : SM5703 MFD Driver remove\n", __func__);
 	gpio_free(chip->pdata->mrstb_gpio);
 	mfd_remove_devices(chip->dev);
-	wakeup_source_destroy(&(chip->irq_wake_lock));
+	wakeup_source_destroy(chip->irq_wake_lock);
 	mutex_destroy(&chip->suspend_flag_lock);
 	mutex_destroy(&chip->io_lock);
 	kfree(chip);
