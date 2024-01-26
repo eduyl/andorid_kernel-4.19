@@ -551,6 +551,15 @@ config REGULATOR_MAX77802
 	  Exynos5420/Exynos5800 SoCs to control various voltages.
 	  It includes support for control of voltage and ramp speed.
 
+config REGULATOR_SM5703
+	tristate "SM5703 regulator"
+	depends on MFD_SM5703
+	help
+	  This driver controls a SM5703 regulator
+	  via I2C bus. The provided regulator is suitable for
+	  Exynos-5 chips to control VCC_CORE and
+	  VCC_USIM voltages.
+
 config REGULATOR_MC13XXX_CORE
 	tristate
 
