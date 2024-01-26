@@ -438,7 +438,7 @@ static int sm5703_mfd_probe(struct i2c_client *i2c,
 		pr_info("%s : Request GPIO %d failed\n",
 				__func__, (int)pdata->mrstb_gpio);
 
-	&(chip->irq_wake_lock) = wakeup_source_create("sm5703mfd_wakelock");
+	&chip->irq_wake_lock = wakeup_source_create("sm5703mfd_wakelock");
 
 	ret = sm5703_init_irq(chip);
 
