@@ -547,7 +547,7 @@ static int sm5703_pmic_dt_parse_pdata(struct platform_device *pdev,
 		}
 
 		rdata->id = i;
-		rdata->initdata = of_get_regulator_init_data(&pdev->dev, reg_np);
+		rdata->initdata = of_get_regulator_init_data(&pdev->dev, reg_np, &regulators[i]);
 		rdata->reg_node = reg_np;
 		rdata++;
 	}
@@ -567,7 +567,7 @@ static int sm5703_pmic_dt_parse_pdata(struct platform_device *pdev,
 }
 #endif /* CONFIG_OF */
 
-static __devinit int sm5703_pmic_probe(struct platform_device *pdev)
+static int sm5703_pmic_probe(struct platform_device *pdev)
 {
 	struct sm5703_mfd_chip *iodev = dev_get_drvdata(pdev->dev.parent);
 	struct sm5703_mfd_platform_data *pdata = iodev->pdata;
@@ -650,7 +650,7 @@ err:
 	return ret;
 }
 
-static int __devexit sm5703_pmic_remove(struct platform_device *pdev)
+static int sm5703_pmic_remove(struct platform_device *pdev)
 {
 	struct sm5703_data *sm5703 = platform_get_drvdata(pdev);
 	struct regulator_dev **rdev = sm5703->rdev;
@@ -678,7 +678,7 @@ static struct platform_driver sm5703_pmic_driver = {
 		   .owner = THIS_MODULE,
 		   },
 	.probe = sm5703_pmic_probe,
-	.remove = __devexit_p(sm5703_pmic_remove),
+	.remove = sm5703_pmic_remove,
 	.id_table = sm5703_pmic_id,
 };
 
