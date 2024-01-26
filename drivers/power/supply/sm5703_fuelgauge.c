@@ -10,8 +10,8 @@
  * published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
  */
-#include <linux/battery/fuelgauge/sm5703_fuelgauge.h>
-#include <linux/battery/fuelgauge/sm5703_fuelgauge_impl.h>
+#include <linux/power/fuelgauge/sm5703_fuelgauge.h>
+#include <linux/power/fuelgauge/sm5703_fuelgauge_impl.h>
 #include <linux/uaccess.h>
 #include <linux/of.h>
 #include <linux/of_gpio.h>

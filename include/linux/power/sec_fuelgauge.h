@@ -19,22 +19,22 @@
 #ifndef __SEC_FUELGAUGE_H
 #define __SEC_FUELGAUGE_H __FILE__
 
-#include <linux/battery/sec_charging_common.h>
+#include <linux/power/sec_charging_common.h>
 
 #if defined(CONFIG_FUELGAUGE_DUMMY)
-#include <linux/battery/fuelgauge/dummy_fuelgauge.h>
+#include <linux/power/fuelgauge/dummy_fuelgauge.h>
 #elif defined(CONFIG_FUELGAUGE_MAX17042)
-#include <linux/battery/fuelgauge/max17042_fuelgauge.h>
+#include <linux/power/fuelgauge/max17042_fuelgauge.h>
 #elif defined(CONFIG_FUELGAUGE_MAX17048)
-#include <linux/battery/fuelgauge/max17048_fuelgauge.h>
+#include <linux/power/fuelgauge/max17048_fuelgauge.h>
 #elif defined(CONFIG_FUELGAUGE_MAX77823)
-#include <linux/battery/fuelgauge/max77823_fuelgauge.h>
+#include <linux/power/fuelgauge/max77823_fuelgauge.h>
 #elif defined(CONFIG_FUELGAUGE_MAX77843)
-#include <linux/battery/fuelgauge/max77843_fuelgauge.h>
+#include <linux/power/fuelgauge/max77843_fuelgauge.h>
 #elif defined(CONFIG_FUELGAUGE_MAX17050)
-#include <linux/battery/fuelgauge/max17050_fuelgauge.h>
+#include <linux/power/fuelgauge/max17050_fuelgauge.h>
 #elif defined(CONFIG_FUELGAUGE_RT5033)
-#include <linux/battery/fuelgauge/rt5033_fuelgauge.h>
+#include <linux/power/fuelgauge/rt5033_fuelgauge.h>
 #endif
 
 struct sec_fuelgauge_reg_data {

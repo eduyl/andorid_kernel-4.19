@@ -10,7 +10,7 @@
  * published by the Free Software Foundation.
  */
 
-#include <linux/battery/sec_adc.h>
+#include <linux/power/sec_adc.h>
 
 static struct iio_channel *temp_adc;
 
