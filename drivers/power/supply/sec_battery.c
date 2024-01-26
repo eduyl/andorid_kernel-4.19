@@ -4009,9 +4009,9 @@ static int sec_usb_get_property(struct power_supply *psy,
 	case POWER_SUPPLY_TYPE_USB_DCP:
 	case POWER_SUPPLY_TYPE_USB_CDP:
 	case POWER_SUPPLY_TYPE_USB_ACA:
-	case POWER_SUPPLY_TYPE_MHL_USB:
-	case POWER_SUPPLY_TYPE_MHL_USB_100:
-	case POWER_SUPPLY_TYPE_MDOCK_USB:
+	//TODO: case POWER_SUPPLY_TYPE_MHL_USB:
+	// case POWER_SUPPLY_TYPE_MHL_USB_100:
+	// case POWER_SUPPLY_TYPE_MDOCK_USB:
 		val->intval = 1;
 		break;
 	default:
@@ -4043,22 +4043,22 @@ static int sec_ac_get_property(struct power_supply *psy,
 	/* Set enable=1 only if the AC charger is connected */
 	switch (battery->cable_type) {
 	case POWER_SUPPLY_TYPE_MAINS:
-	case POWER_SUPPLY_TYPE_HV_PREPARE_MAINS:
-	case POWER_SUPPLY_TYPE_HV_MAINS:
-	case POWER_SUPPLY_TYPE_HV_ERR:
-	case POWER_SUPPLY_TYPE_MISC:
-	case POWER_SUPPLY_TYPE_CARDOCK:
-	case POWER_SUPPLY_TYPE_UARTOFF:
-	case POWER_SUPPLY_TYPE_LAN_HUB:
+	// case POWER_SUPPLY_TYPE_HV_PREPARE_MAINS:
+	// case POWER_SUPPLY_TYPE_HV_MAINS:
+	// case POWER_SUPPLY_TYPE_HV_ERR:
+	// case POWER_SUPPLY_TYPE_MISC:
+	// case POWER_SUPPLY_TYPE_CARDOCK:
+	// case POWER_SUPPLY_TYPE_UARTOFF:
+	// case POWER_SUPPLY_TYPE_LAN_HUB:
 	case POWER_SUPPLY_TYPE_UNKNOWN:
-	case POWER_SUPPLY_TYPE_MHL_500:
-	case POWER_SUPPLY_TYPE_MHL_900:
-	case POWER_SUPPLY_TYPE_MHL_1500:
-	case POWER_SUPPLY_TYPE_MHL_2000:
-	case POWER_SUPPLY_TYPE_SMART_OTG:
-	case POWER_SUPPLY_TYPE_SMART_NOTG:
-	case POWER_SUPPLY_TYPE_HV_UNKNOWN:
-	case POWER_SUPPLY_TYPE_MDOCK_TA:
+	// case POWER_SUPPLY_TYPE_MHL_500:
+	// case POWER_SUPPLY_TYPE_MHL_900:
+	// case POWER_SUPPLY_TYPE_MHL_1500:
+	// case POWER_SUPPLY_TYPE_MHL_2000:
+	// case POWER_SUPPLY_TYPE_SMART_OTG:
+	// case POWER_SUPPLY_TYPE_SMART_NOTG:
+	// case POWER_SUPPLY_TYPE_HV_UNKNOWN:
+	// case POWER_SUPPLY_TYPE_MDOCK_TA:
 		val->intval = 1;
 		break;
 	default:
@@ -5197,6 +5197,7 @@ static int sec_battery_probe(struct platform_device *pdev)
 {
 	sec_battery_platform_data_t *pdata = NULL;
 	struct sec_battery_info *battery;
+	struct power_supply_config psy_cfg = {};
 	int ret = 0;
 #ifndef CONFIG_OF
 	int i;
@@ -5422,36 +5423,36 @@ static int sec_battery_probe(struct platform_device *pdev)
 	}
 
 	/* init power supplier framework */
-	ret = power_supply_register(&pdev->dev, &battery->psy_ps);
-	if (ret) {
+	battery->psy_ps = power_supply_register(&pdev->dev, &battery->psy_ps.desc, &psy_cfg);
+	if (IS_ERR(battery->psy_ps)) {
 		dev_err(battery->dev,
 			"%s: Failed to Register psy_ps\n", __func__);
 		goto err_workqueue;
 	}
 
-	ret = power_supply_register(&pdev->dev, &battery->psy_wireless);
-	if (ret) {
+	battery->psy_wireless = power_supply_register(&pdev->dev, &battery->psy_wireless.desc, &psy_cfg);
+	if (IS_ERR(battery->psy_wireless)) {
 		dev_err(battery->dev,
 			"%s: Failed to Register psy_wireless\n", __func__);
 		goto err_supply_unreg_ps;
 	}
 
-	ret = power_supply_register(&pdev->dev, &battery->psy_usb);
-	if (ret) {
+	battery->psy_usb = power_supply_register(&pdev->dev, &battery->psy_usb.desc, &psy_cfg);
+	if (IS_ERR(battery->psy_usb)) {
 		dev_err(battery->dev,
 			"%s: Failed to Register psy_usb\n", __func__);
 		goto err_supply_unreg_wireless;
 	}
 
-	ret = power_supply_register(&pdev->dev, &battery->psy_ac);
-	if (ret) {
+	battery->psy_ac = power_supply_register(&pdev->dev, &battery->psy_ac.desc, &psy_cfg);
+	if (IS_ERR(battery->psy_ac)) {
 		dev_err(battery->dev,
 			"%s: Failed to Register psy_ac\n", __func__);
 		goto err_supply_unreg_usb;
 	}
 
-	ret = power_supply_register(&pdev->dev, &battery->psy_bat);
-	if (ret) {
+	battery->psy_bat = power_supply_register(&pdev->dev, &battery->psy_bat.desc, &psy_cfg);
+	if (IS_ERR(battery->psy_bat)) {
 		dev_err(battery->dev,
 			"%s: Failed to Register psy_bat\n", __func__);
 		goto err_supply_unreg_ac;
@@ -5482,7 +5483,7 @@ static int sec_battery_probe(struct platform_device *pdev)
 	}
 #endif
 
-	ret = sec_bat_create_attrs(battery->psy_bat.dev);
+	ret = sec_bat_create_attrs(&battery->psy_bat.dev);
 	if (ret) {
 		dev_err(battery->dev,
 			"%s : Failed to create_attrs\n", __func__);
@@ -5546,15 +5547,15 @@ err_req_irq:
 	if (battery->pdata->bat_irq)
 		free_irq(battery->pdata->bat_irq, battery);
 err_supply_unreg_bat:
-	power_supply_unregister(&battery->psy_bat);
+	power_supply_unregister(battery->psy_bat);
 err_supply_unreg_ac:
-	power_supply_unregister(&battery->psy_ac);
+	power_supply_unregister(battery->psy_ac);
 err_supply_unreg_usb:
-	power_supply_unregister(&battery->psy_usb);
+	power_supply_unregister(battery->psy_usb);
 err_supply_unreg_wireless:
-	power_supply_unregister(&battery->psy_wireless);
+	power_supply_unregister(battery->psy_wireless);
 err_supply_unreg_ps:
-	power_supply_unregister(&battery->psy_ps);
+	power_supply_unregister(battery->psy_ps);
 err_workqueue:
 	destroy_workqueue(battery->monitor_wqueue);
 err_wake_lock:
@@ -5595,9 +5596,9 @@ static int sec_battery_remove(struct platform_device *pdev)
 	alarm_cancel(&battery->event_termination_alarm);
 	flush_workqueue(battery->monitor_wqueue);
 	destroy_workqueue(battery->monitor_wqueue);
-	wakeup_source_destroy(&battery->monitor_wake_lock);
-	wakeup_source_destroy(&battery->cable_wake_lock);
-	wakeup_source_destroy(&battery->vbus_wake_lock);
+	wakeup_source_destroy(battery->monitor_wake_lock);
+	wakeup_source_destroy(battery->cable_wake_lock);
+	wakeup_source_destroy(battery->vbus_wake_lock);
 
 	mutex_destroy(&battery->adclock);
 #ifdef CONFIG_OF
@@ -5607,11 +5608,11 @@ static int sec_battery_remove(struct platform_device *pdev)
 		adc_exit(battery->pdata, i);
 #endif
 
-	power_supply_unregister(&battery->psy_ps);
-	power_supply_unregister(&battery->psy_wireless);
-	power_supply_unregister(&battery->psy_ac);
-	power_supply_unregister(&battery->psy_usb);
-	power_supply_unregister(&battery->psy_bat);
+	power_supply_unregister(battery->psy_ps);
+	power_supply_unregister(battery->psy_wireless);
+	power_supply_unregister(battery->psy_ac);
+	power_supply_unregister(battery->psy_usb);
+	power_supply_unregister(battery->psy_bat);
 
 	dev_dbg(battery->dev, "%s: End\n", __func__);
 	kfree(battery);

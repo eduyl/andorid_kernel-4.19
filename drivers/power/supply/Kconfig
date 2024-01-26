@@ -32,6 +32,39 @@ config FUELGAUGE_SM5703
 	  Say Y to include support SM5703 FUELGAUGE.
 	  Using coulomb counting.
 
+config SM5703_OCV_TRACKING
+	bool "SM5703 OCV Tracking"
+	default n
+	depends on FUELGAUGE_SM5703
+	help
+	  Say Y here to enable support for SM5703 OCV Tracking
+	  You have to define FUELGAUGE_SM5703
+
+config DUAL_BATTERY
+	tristate "Support dual battery"
+	default n
+	depends on BATTERY_SAMSUNG
+	help
+	 Say Y Support dual battery.
+
+config BATTERY_SWELLING
+	bool "prevent battery swellin "
+	help
+	  Say Y to include support for prevent battery swelling
+
+config BATTERY_SWELLING_SELF_DISCHARGING
+	bool "prevent battery swelling with self discharging"
+	depends on BATTERY_SWELLING
+	help
+	  Say Y to include support for prevent battery swelling with self discharging
+	  
+config PREVENT_SOC_JUMP
+	tristate "prevent soc jump at full-charged"
+	default n
+	depends on BATTERY_SAMSUNG
+	help
+	 Say Y to prevent soc jump
+
 
 config POWER_SUPPLY_DEBUG
 	bool "Power supply debug"

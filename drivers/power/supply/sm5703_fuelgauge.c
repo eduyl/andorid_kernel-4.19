@@ -293,7 +293,7 @@ static unsigned int sm5703_get_vbat(struct sm5703_fuelgauge_data *fuelgauge)
 
 	if ((fuelgauge->force_dec_mode == SM5703_COLD_MODE) && vbat > 3400) {
 		fuelgauge->force_dec_mode = SM5703_RECOVERY_MODE;
-		__pm_relax(&fuelgauge->fuel_alert_wake_lock);
+		__pm_relax(fuelgauge->fuel_alert_wake_lock);
 		sm5703_fuelgauge_fuelalert_init(fuelgauge,
 				fuelgauge->pdata->fuel_alert_soc);
 		pr_info("%s : COLD MODE DISABLE\n", __func__);
@@ -1123,7 +1123,7 @@ static int sm5703_fg_get_property(struct power_supply *psy,
 				/* check whether doing the wake_unlock */
 				if ((val->intval > fuelgauge->pdata->fuel_alert_soc) &&
 						fuelgauge->is_fuel_alerted) {
-					__pm_relax(&fuelgauge->fuel_alert_wake_lock);
+					__pm_relax(fuelgauge->fuel_alert_wake_lock);
 					sm5703_fuelgauge_fuelalert_init(fuelgauge,
 							fuelgauge->pdata->fuel_alert_soc);
 				}
@@ -1212,7 +1212,7 @@ static int sm5703_fg_set_property(struct power_supply *psy,
 				if (fuelgauge->force_dec_mode != SM5703_NORMAL_MODE) {
 					fuelgauge->force_dec_mode = SM5703_NORMAL_MODE;
 					fuelgauge->initial_update_of_soc = true;
-					__pm_relax(&fuelgauge->fuel_alert_wake_lock);
+					__pm_relax(fuelgauge->fuel_alert_wake_lock);
 					sm5703_fuelgauge_fuelalert_init(fuelgauge,
 							fuelgauge->pdata->fuel_alert_soc);
 				}
@@ -1294,7 +1294,7 @@ static void sm5703_fg_isr_work(struct work_struct *work)
 
 	fg_alert_status &= fuelgauge->info.irq_ctrl;
 	if (!fg_alert_status) {
-		__pm_relax(&fuelgauge->fuel_alert_wake_lock);
+		__pm_relax(fuelgauge->fuel_alert_wake_lock);
 	}
 
 	if (fg_alert_status & ENABLE_L_VOL_INT) {
@@ -1314,7 +1314,7 @@ static irqreturn_t sm5703_fg_irq_thread(int irq, void *irq_data)
 		__func__, fg_irq);
 
 	if (!fuelgauge->is_fuel_alerted) {
-		__pm_stay_awake(&fuelgauge->fuel_alert_wake_lock);
+		__pm_stay_awake(fuelgauge->fuel_alert_wake_lock);
 		fuelgauge->is_fuel_alerted = true;
 		schedule_delayed_work(&fuelgauge->isr_work, 0);
 	}
@@ -1649,6 +1649,8 @@ static int sm5703_fuelgauge_probe(struct i2c_client *client,
 	struct i2c_adapter *adapter = to_i2c_adapter(client->dev.parent);
 	struct sm5703_fuelgauge_data *fuelgauge;
 	union power_supply_propval raw_soc_val;
+	struct power_supply_config psy_cfg = {};
+
 	int ret = 0;
 
 	pr_info("%s: SM5703 Fuelgauge Driver Loading\n", __func__);
@@ -1707,7 +1709,7 @@ static int sm5703_fuelgauge_probe(struct i2c_client *client,
 		/* goto err_data_free; */
 	}
 
-	ret = power_supply_register(&client->dev, &fuelgauge->psy_fg);
+	ret = power_supply_register(&client->dev, &fuelgauge->psy_fg.desc, &psy_cfg);
 	if (ret) {
 		pr_err("%s: Failed to Register psy_fg\n", __func__);
 		goto err_data_free;
@@ -1716,7 +1718,7 @@ static int sm5703_fuelgauge_probe(struct i2c_client *client,
 	if (fuelgauge->pdata->fuel_alert_soc >= 0) {
 		sm5703_fuelgauge_fuelalert_init(fuelgauge,
 					fuelgauge->pdata->fuel_alert_soc);
-		&fuelgauge->fuel_alert_wake_lock = wakeup_source_create("fuel_alerted");
+		fuelgauge->fuel_alert_wake_lock = wakeup_source_create("fuel_alerted");
 
 		if (fuelgauge->pdata->fg_irq > 0) {
 			INIT_DELAYED_WORK(
@@ -1784,7 +1786,7 @@ static int sm5703_fuelgauge_remove(struct i2c_client *client)
 	struct sm5703_fuelgauge_data *fuelgauge = i2c_get_clientdata(client);
 
 	if (fuelgauge->pdata->fuel_alert_soc >= 0)
-		wakeup_source_destroy(&fuelgauge->fuel_alert_wake_lock);
+		wakeup_source_destroy(fuelgauge->fuel_alert_wake_lock);
 
 	return 0;
 }

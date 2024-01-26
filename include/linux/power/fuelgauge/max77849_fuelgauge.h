@@ -18,7 +18,7 @@
 #ifndef __MAX77849_FUELGAUGE_H
 #define __MAX77849_FUELGAUGE_H __FILE__
 
-#include <linux/battery/sec_charging_common.h>
+#include <linux/power/sec_charging_common.h>
 #include <linux/of_gpio.h>
 
 #define FUELALERT_CHECK_VOLTAGE_FEATURE
