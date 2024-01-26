@@ -8,9 +8,8 @@
  * published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
  */
-
-#include <linux/battery/charger/sm5703_charger.h>
-#include <linux/wakelock.h>
+//Converting wakelocks https://www.linaro.org/blog/converting-code-implementing-suspend-blockers/
+#include <linux/power/sm5703_charger.h>
 
 #ifdef CONFIG_SM5703_MUIC
 #include <linux/i2c/sm5703-muic.h>
@@ -75,7 +74,7 @@ typedef struct sm5703_charger_data {
 	struct power_supply	psy_otg;
 	sm5703_charger_platform_data_t *pdata;
 	int charging_current;
-	struct wake_lock vbuslimit_wake_lock;
+	struct wakeup_source vbuslimit_wake_lock;
 	struct delayed_work vbuslimit_work;
 	int	current_max;
 	bool is_current_reduced;
@@ -93,7 +92,7 @@ typedef struct sm5703_charger_data {
 	bool is_mdock;
 	struct workqueue_struct *wq;
 #if EN_OTGFAIL_IRQ	
-	struct wake_lock otg_fail_wake_lock;
+	struct wakeup_source otg_fail_wake_lock;
 	struct work_struct otg_fail_work;
 #endif
 	int status;
@@ -413,7 +412,7 @@ static void sm5703_set_input_current_limit(struct sm5703_charger_data *charger,
 #endif
 			) {
 			/* start vbuslimit work */
-			wake_lock(&charger->vbuslimit_wake_lock);
+			__pm_stay_awake(&charger->vbuslimit_wake_lock);
 			queue_delayed_work_on(0, charger->wq,
 				&charger->vbuslimit_work, msecs_to_jiffies(START_VBUSLIMIT_DELAY));
 		}
@@ -962,7 +961,7 @@ static int sec_chg_set_property(struct power_supply *psy,
 						[charger->cable_type].fast_charging_current;
 
 				charger->is_current_reduced = false;
-				wake_unlock(&charger->vbuslimit_wake_lock);
+				__pm_relax(&charger->vbuslimit_wake_lock);
 				cancel_delayed_work(&charger->vbuslimit_work);
 #if EN_AICL_IRQ
 				sm5703_set_aicl_irq(charger, 0);
@@ -1334,7 +1333,7 @@ static void sm5703_chg_otg_fail_work(struct work_struct *work)
 	o_notify = get_otg_notify();
 #endif
 
-	wake_lock(&charger->otg_fail_wake_lock);
+	__pm_stay_awake(&charger->otg_fail_wake_lock);
 
 	pr_info("%s : start \n", __func__);
 
@@ -1374,7 +1373,7 @@ static void sm5703_chg_otg_fail_work(struct work_struct *work)
 	ret = sm5703_reg_read(i2c, SM5703_INTMSK1);
 	pr_info("%s: Final check SM5703_INTMSK1 = 0x%x\n", __func__,ret);
 
-	wake_unlock(&charger->otg_fail_wake_lock);
+	__pm_relax(&charger->otg_fail_wake_lock);
 	
 }
 #endif /*EN_CHGON_IRQ*/
@@ -1399,7 +1398,7 @@ static void sm5703_chg_vbuslimit_work(struct work_struct *work)
 				pr_info("%s: slow charging on : input current(%dmA), cable type(%d)\n",
 					__func__, charger->current_max, charger->cable_type);
 			}
-			wake_unlock(&charger->vbuslimit_wake_lock);
+			__pm_relax(&charger->vbuslimit_wake_lock);
 		} else {
 			/* reduce input current & restart vbuslimit work */
 			int reg_data, temp;
@@ -1420,7 +1419,7 @@ static void sm5703_chg_vbuslimit_work(struct work_struct *work)
 		}
 		pr_info("%s: vbuslimit state(%d)\n", __func__, vbuslimit_state);
 	} else {
-		wake_unlock(&charger->vbuslimit_wake_lock);
+		__pm_relax(&charger->vbuslimit_wake_lock);
 	}
 }
 
@@ -1453,7 +1452,7 @@ static irqreturn_t sm5703_chg_aicl_irq_handler(int irq, void *data)
 	if (charger->pdata->chg_vbuslimit &&
 		charger->cable_type != POWER_SUPPLY_TYPE_BATTERY) {
 		/* start vbuslimit work */
-		wake_lock(&charger->vbuslimit_wake_lock);
+		__pm_stay_awake(&charger->vbuslimit_wake_lock);
 		queue_delayed_work_on(0, charger->wq,
 			&charger->vbuslimit_work, msecs_to_jiffies(START_VBUSLIMIT_DELAY));
 	}
@@ -1809,11 +1808,11 @@ static int sm5703_charger_probe(struct platform_device *pdev)
 	charger->wq = create_workqueue("sm5703chg_workqueue");
 	if (charger->pdata->chg_vbuslimit) {
 		INIT_DELAYED_WORK(&charger->vbuslimit_work, sm5703_chg_vbuslimit_work);
-		wake_lock_init(&charger->vbuslimit_wake_lock, WAKE_LOCK_SUSPEND, "sm5703-vbuslimit");
+		&charger->vbuslimit_wake_lock = wakeup_source_create("sm5703-vbuslimit");
 	}
 
 #if EN_OTGFAIL_IRQ
-	wake_lock_init(&charger->otg_fail_wake_lock, WAKE_LOCK_SUSPEND, "otg_fail_wake_lock");
+	&charger->otg_fail_wake_lock = wakeup_source_create("otg_fail_wake_lock");
 	INIT_WORK(&charger->otg_fail_work, sm5703_chg_otg_fail_work);
 #endif	
 
@@ -1842,7 +1841,7 @@ err_power_supply_register_otg:
 err_power_supply_register:
 	destroy_workqueue(charger->wq);
 	if (charger->pdata->chg_vbuslimit) {
-		wake_lock_destroy(&charger->vbuslimit_wake_lock);
+		wakeup_source_destroy(&charger->vbuslimit_wake_lock);
 	}
 err_parse_dt:
 err_parse_dt_nomem:
@@ -1860,7 +1859,7 @@ static int sm5703_charger_remove(struct platform_device *pdev)
 	power_supply_unregister(&charger->psy_chg);
 	destroy_workqueue(charger->wq);
 	if (charger->pdata->chg_vbuslimit) {
-		wake_lock_destroy(&charger->vbuslimit_wake_lock);
+		wakeup_source_destroy(&charger->vbuslimit_wake_lock);
 	}
 	mutex_destroy(&charger->io_lock);
 	gpio_free(charger->pdata->chgen_gpio);

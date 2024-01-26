@@ -286,7 +286,7 @@ static irqreturn_t sm5703_irq_handler(int irq, void *data)
 
 
 	printk("SM5703 IRQ triggered\n");
-	wake_lock_timeout(&chip->irq_wake_lock, msecs_to_jiffies(500));
+	__pm_wakeup_event(&chip->irq_wake_lock, msecs_to_jiffies(500));
 	mutex_lock(&chip->suspend_flag_lock);
 	if (chip->suspend_flag) {
 		printk("I2C host controller might not be ready,"

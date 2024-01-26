@@ -22,7 +22,6 @@
 #include <linux/io.h>
 #include <linux/kthread.h>
 #include <linux/time.h>
-#include <linux/wakelock.h>
 #include <linux/suspend.h>
 #include <linux/mutex.h>
 #include <linux/slab.h>
@@ -139,7 +138,7 @@ struct restart_log {
  */
 struct subsys_device {
 	struct subsys_desc *desc;
-	struct wake_lock wake_lock;
+	struct wakeup_source wake_lock;
 	char wlname[64];
 	struct work_struct work;
 
@@ -634,7 +633,7 @@ static void subsystem_restart_wq_func(struct work_struct *work)
 
 	spin_lock_irqsave(&track->s_lock, flags);
 	track->p_state = SUBSYS_NORMAL;
-	wake_unlock(&dev->wake_lock);
+	__pm_relax(&dev->wake_lock);
 	spin_unlock_irqrestore(&track->s_lock, flags);
 }
 
@@ -658,7 +657,7 @@ static void __subsystem_restart_dev(struct subsys_device *dev)
 		if (dev->track.state == SUBSYS_ONLINE &&
 		    track->p_state != SUBSYS_RESTARTING) {
 			track->p_state = SUBSYS_CRASHED;
-			wake_lock(&dev->wake_lock);
+			__pm_stay_awake(&dev->wake_lock);
 			queue_work(ssr_wq, &dev->work);
 		} else {
 			panic("Subsystem %s crashed during SSR!", name);
@@ -878,7 +877,7 @@ static void subsys_device_release(struct device *dev)
 {
 	struct subsys_device *subsys = to_subsys(dev);
 
-	wake_lock_destroy(&subsys->wake_lock);
+	wakeup_source_destroy(&subsys->wake_lock);
 	mutex_destroy(&subsys->track.lock);
 	ida_simple_remove(&subsys_ida, subsys->id);
 	kfree(subsys);
@@ -929,7 +928,7 @@ struct subsys_device *subsys_register(struct subsys_desc *desc)
 	subsys->notify = subsys_notif_add_subsys(desc->name);
 
 	snprintf(subsys->wlname, sizeof(subsys->wlname), "ssr(%s)", desc->name);
-	wake_lock_init(&subsys->wake_lock, WAKE_LOCK_SUSPEND, subsys->wlname);
+	&subsys->wake_lock = wakeup_source_create(subsys->wlname);
 	INIT_WORK(&subsys->work, subsystem_restart_wq_func);
 	spin_lock_init(&subsys->track.s_lock);
 
@@ -966,7 +965,7 @@ err_debugfs:
 	mutex_destroy(&subsys->track.lock);
 	ida_simple_remove(&subsys_ida, subsys->id);
 err_ida:
-	wake_lock_destroy(&subsys->wake_lock);
+	wakeup_source_destroy(&subsys->wake_lock);
 	kfree(subsys);
 	return ERR_PTR(ret);
 }
