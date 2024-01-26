@@ -1648,6 +1648,8 @@ static int sm5703_fuelgauge_probe(struct i2c_client *client,
 {
 	struct i2c_adapter *adapter = to_i2c_adapter(client->dev.parent);
 	struct sm5703_fuelgauge_data *fuelgauge;
+	struct power_supply_desc *fuelgaugedesc;
+	struct power_supply *psr;
 	union power_supply_propval raw_soc_val;
 	struct power_supply_config psy_cfg = {};
 
@@ -1689,12 +1691,14 @@ static int sm5703_fuelgauge_probe(struct i2c_client *client,
 	if (fuelgauge->pdata->fuelgauge_name == NULL)
 		fuelgauge->pdata->fuelgauge_name = "sm5703-fuelgauge";
 
-	fuelgauge->psy_fg.name          = fuelgauge->pdata->fuelgauge_name;
-	fuelgauge->psy_fg.type          = POWER_SUPPLY_TYPE_UNKNOWN;
-	fuelgauge->psy_fg.get_property  = sm5703_fg_get_property;
-	fuelgauge->psy_fg.set_property  = sm5703_fg_set_property;
-	fuelgauge->psy_fg.properties    = sm5703_fuelgauge_props;
-	fuelgauge->psy_fg.num_properties =
+	fuelgaugedesc = fuelgauge->psy_fg.desc;
+
+	fuelgaugedesc->name          = fuelgauge->pdata->fuelgauge_name;
+	fuelgaugedesc->type          = POWER_SUPPLY_TYPE_UNKNOWN;
+	fuelgaugedesc->get_property  = sm5703_fg_get_property;
+	fuelgaugedesc->set_property  = sm5703_fg_set_property;
+	fuelgaugedesc->properties    = sm5703_fuelgauge_props;
+	fuelgaugedesc->num_properties =
 		ARRAY_SIZE(sm5703_fuelgauge_props);
 
 	fuelgauge->capacity_max = fuelgauge->pdata->capacity_max;
@@ -1709,8 +1713,8 @@ static int sm5703_fuelgauge_probe(struct i2c_client *client,
 		/* goto err_data_free; */
 	}
 
-	ret = power_supply_register(&client->dev, &fuelgauge->psy_fg.desc, &psy_cfg);
-	if (ret) {
+	psr = power_supply_register(&client->dev, fuelgaugedesc, &psy_cfg);
+	if (IS_ERR(psr)) {
 		pr_err("%s: Failed to Register psy_fg\n", __func__);
 		goto err_data_free;
 	}

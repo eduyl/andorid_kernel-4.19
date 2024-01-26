@@ -662,10 +662,10 @@ static bool sec_bat_ovp_uvlo_result(
 			battery->is_recharging = false;
 			/* Take the wakelock during 10 seconds
 			   when over-voltage status is detected	 */
-			__pm_wakeup_event(&battery->vbus_wake_lock, HZ * 10);
+			__pm_wakeup_event(battery->vbus_wake_lock, HZ * 10);
 			break;
 		}
-		power_supply_changed(&battery->psy_bat);
+		power_supply_changed(battery->psy_bat);
 		return true;
 	}
 
@@ -825,7 +825,7 @@ static bool sec_bat_voltage_check(struct sec_battery_info *battery)
 			battery->status = POWER_SUPPLY_STATUS_CHARGING;
 			battery->voltage_now = 1080;
 			battery->voltage_avg = 1080;
-			power_supply_changed(&battery->psy_bat);
+			power_supply_changed(battery->psy_bat);
 			dev_info(battery->dev,
 				"%s: battery status full -> charging, RepSOC(%d)\n", __func__, value.intval);
 			return false;
@@ -1058,7 +1058,7 @@ static void sec_bat_swelling_check(struct sec_battery_info *battery, int tempera
 				/* changed topoff current */
 				val.intval = battery->pdata->swelling_topoff_current;
 				psy_do_property(battery->pdata->charger_name, set,
-						POWER_SUPPLY_PROP_CURRENT_FULL, val);
+						POWER_SUPPLY_PROP_CHARGE_FULL, val);
 			}
 			if (temperature <= battery->pdata->swelling_low_temp_block &&
 				battery->pdata->swelling_chg_current) {
@@ -2068,7 +2068,7 @@ static void sec_bat_do_fullcharged(
 	 * activated wake lock in a few seconds
 	 */
 	if (battery->pdata->polling_type == SEC_BATTERY_MONITOR_ALARM)
-		__pm_wakeup_event(&battery->vbus_wake_lock, HZ * 10);
+		__pm_wakeup_event(battery->vbus_wake_lock, HZ * 10);
 }
 
 static bool sec_bat_fullcharged_check(
@@ -2495,7 +2495,7 @@ static void sec_bat_monitor_work(
 				battery->voltage_now = value.intval;
 				sec_bat_get_temperature(battery);
 
-				power_supply_changed(&battery->psy_bat);
+				power_supply_changed(battery->psy_bat);
 
 				pr_info("Skip monitor work(%ld, Vnow:%dmV, Tbat:%d)\n",
 					c_ts.tv_sec - old_ts.tv_sec, battery->voltage_now, battery->temperature);
@@ -2617,15 +2617,15 @@ continue_monitor:
 			sec_bat_set_charge(battery, true);
 		}
 	}
-	power_supply_changed(&battery->psy_bat);
+	power_supply_changed(battery->psy_bat);
 
 skip_monitor:
 	sec_bat_set_polling(battery);
 
 	if (battery->capacity <= 0)
-		__pm_wakeup_event(&battery->monitor_wake_lock, HZ * 5);
+		__pm_wakeup_event(battery->monitor_wake_lock, HZ * 5);
 	else
-		__pm_relax(&battery->monitor_wake_lock);
+		__pm_relax(battery->monitor_wake_lock);
 
 	dev_dbg(battery->dev, "%s: End\n", __func__);
 
@@ -2706,7 +2706,7 @@ static void sec_bat_cable_work(struct work_struct *work)
 	 * if cable is connected and disconnected,
 	 * activated wake lock in a few seconds
 	 */
-	__pm_wakeup_event(&battery->vbus_wake_lock, HZ * 10);
+	__pm_wakeup_event(battery->vbus_wake_lock, HZ * 10);
 
 	if (battery->cable_type == POWER_SUPPLY_TYPE_BATTERY ||
 		((battery->pdata->cable_check_type &
@@ -2806,7 +2806,7 @@ static void sec_bat_cable_work(struct work_struct *work)
 	queue_delayed_work_on(0, battery->monitor_wqueue, &battery->monitor_work,
 					msecs_to_jiffies(500));
 end_of_cable_work:
-	__pm_relax(&battery->cable_wake_lock);
+	__pm_relax(battery->cable_wake_lock);
 	dev_dbg(battery->dev, "%s: End\n", __func__);
 }
 
@@ -3252,7 +3252,7 @@ ssize_t sec_bat_store_attrs(
 			union power_supply_propval value;
 			battery->voltage_now = 1234;
 			battery->voltage_avg = 1234;
-			power_supply_changed(&battery->psy_bat);
+			power_supply_changed(battery->psy_bat);
 
 			value.intval =
 				SEC_FUELGAUGE_CAPACITY_TYPE_RESET;
@@ -3620,7 +3620,7 @@ ssize_t sec_bat_store_attrs(
 				psy_do_property(battery->pdata->fuelgauge_name, get,
 					POWER_SUPPLY_PROP_CAPACITY, value);
 				battery->capacity = value.intval;
-				power_supply_changed(&battery->psy_bat);
+				power_supply_changed(battery->psy_bat);
 			}
 			ret = count;
 		}
@@ -3812,7 +3812,7 @@ static int sec_bat_set_property(struct power_supply *psy,
 		break;
 	case POWER_SUPPLY_PROP_CAPACITY:
 		battery->capacity = val->intval;
-		power_supply_changed(&battery->psy_bat);
+		power_supply_changed(battery->psy_bat);
 		break;
 	case POWER_SUPPLY_PROP_PRESENT:
 		cancel_delayed_work(&battery->monitor_work);
@@ -5198,6 +5198,11 @@ static int sec_battery_probe(struct platform_device *pdev)
 	sec_battery_platform_data_t *pdata = NULL;
 	struct sec_battery_info *battery;
 	struct power_supply_config psy_cfg = {};
+	struct power_supply_desc *psy_bat_desc;
+	struct power_supply_desc *psy_usb_desc;
+	struct power_supply_desc *psy_ac_desc;
+	struct power_supply_desc *psy_wireless_desc;
+
 	int ret = 0;
 #ifndef CONFIG_OF
 	int i;
@@ -5341,42 +5346,47 @@ static int sec_battery_probe(struct platform_device *pdev)
 	if (battery->pdata->fuelgauge_name == NULL)
 		battery->pdata->fuelgauge_name = "sec-fuelgauge";
 
-	battery->psy_bat.name = "battery",
-	battery->psy_bat.type = POWER_SUPPLY_TYPE_BATTERY,
-	battery->psy_bat.properties = sec_battery_props,
-	battery->psy_bat.num_properties = ARRAY_SIZE(sec_battery_props),
-	battery->psy_bat.get_property = sec_bat_get_property,
-	battery->psy_bat.set_property = sec_bat_set_property,
-	battery->psy_usb.name = "usb",
-	battery->psy_usb.type = POWER_SUPPLY_TYPE_USB,
+	psy_bat_desc = battery->psy_bat->desc;
+	psy_ac_desc = battery->psy_ac->desc;
+	psy_usb_desc = battery->psy_usb->desc;
+	psy_wireless_desc = battery->psy_wireless->desc;
+
+	psy_bat_desc->name = "battery",
+	psy_bat_desc->type = POWER_SUPPLY_TYPE_BATTERY,
+	psy_bat_desc->properties = sec_battery_props,
+	psy_bat_desc->num_properties = ARRAY_SIZE(sec_battery_props),
+	psy_bat_desc->get_property = sec_bat_get_property,
+	psy_bat_desc->set_property = sec_bat_set_property,
+	psy_usb_desc->name = "usb",
+	psy_usb_desc->type = POWER_SUPPLY_TYPE_USB,
 	battery->psy_usb.supplied_to = supply_list,
 	battery->psy_usb.num_supplicants = ARRAY_SIZE(supply_list),
-	battery->psy_usb.properties = sec_power_props,
-	battery->psy_usb.num_properties = ARRAY_SIZE(sec_power_props),
-	battery->psy_usb.get_property = sec_usb_get_property,
-	battery->psy_ac.name = "ac",
-	battery->psy_ac.type = POWER_SUPPLY_TYPE_MAINS,
+	psy_usb_desc->properties = sec_power_props,
+	psy_usb_desc->num_properties = ARRAY_SIZE(sec_power_props),
+	psy_usb_desc->get_property = sec_usb_get_property,
+	psy_ac_desc->name = "ac",
+	psy_ac_desc->type = POWER_SUPPLY_TYPE_MAINS,
 	battery->psy_ac.supplied_to = supply_list,
 	battery->psy_ac.num_supplicants = ARRAY_SIZE(supply_list),
-	battery->psy_ac.properties = sec_power_props,
-	battery->psy_ac.num_properties = ARRAY_SIZE(sec_power_props),
-	battery->psy_ac.get_property = sec_ac_get_property;
-	battery->psy_wireless.name = "wireless",
-	battery->psy_wireless.type = POWER_SUPPLY_TYPE_WIRELESS,
+	psy_ac_desc->properties = sec_power_props,
+	psy_ac_desc->num_properties = ARRAY_SIZE(sec_power_props),
+	psy_ac_desc->get_property = sec_ac_get_property;
+	psy_wireless_desc->name = "wireless",
+	psy_wireless_desc->type = POWER_SUPPLY_TYPE_WIRELESS,
 	battery->psy_wireless.supplied_to = supply_list,
 	battery->psy_wireless.num_supplicants = ARRAY_SIZE(supply_list),
-	battery->psy_wireless.properties = sec_power_props,
-	battery->psy_wireless.num_properties = ARRAY_SIZE(sec_power_props),
-	battery->psy_wireless.get_property = sec_wireless_get_property;
-	battery->psy_wireless.set_property = sec_wireless_set_property;
-	battery->psy_ps.name = "ps",
-	battery->psy_ps.type = POWER_SUPPLY_TYPE_POWER_SHARING,
+	psy_wireless_desc->properties = sec_power_props,
+	psy_wireless_desc->num_properties = ARRAY_SIZE(sec_power_props),
+	psy_wireless_desc->get_property = sec_wireless_get_property;
+	psy_wireless_desc->set_property = sec_wireless_set_property;
+	psy_ps_desc->name = "ps",
+	psy_ps_desc->type = POWER_SUPPLY_TYPE_POWER_SHARING,
 	battery->psy_ps.supplied_to = supply_list,
 	battery->psy_ps.num_supplicants = ARRAY_SIZE(supply_list),
-	battery->psy_ps.properties = sec_ps_props,
-	battery->psy_ps.num_properties = ARRAY_SIZE(sec_ps_props),
-	battery->psy_ps.get_property = sec_ps_get_property;
-	battery->psy_ps.set_property = sec_ps_set_property;
+	psy_ps_desc->properties = sec_ps_props,
+	psy_ps_desc->num_properties = ARRAY_SIZE(sec_ps_props),
+	psy_ps_desc->get_property = sec_ps_get_property;
+	psy_ps_desc->set_property = sec_ps_set_property;
 
 #if defined (CONFIG_BATTERY_SWELLING_SELF_DISCHARGING)
 	if (battery->pdata->factory_discharging) {
@@ -5423,35 +5433,35 @@ static int sec_battery_probe(struct platform_device *pdev)
 	}
 
 	/* init power supplier framework */
-	battery->psy_ps = power_supply_register(&pdev->dev, &battery->psy_ps.desc, &psy_cfg);
+	battery->psy_ps = power_supply_register(&pdev->dev, battery->psy_ps->desc, &psy_cfg);
 	if (IS_ERR(battery->psy_ps)) {
 		dev_err(battery->dev,
 			"%s: Failed to Register psy_ps\n", __func__);
 		goto err_workqueue;
 	}
 
-	battery->psy_wireless = power_supply_register(&pdev->dev, &battery->psy_wireless.desc, &psy_cfg);
+	battery->psy_wireless = power_supply_register(&pdev->dev, battery->psy_wireless->desc, &psy_cfg);
 	if (IS_ERR(battery->psy_wireless)) {
 		dev_err(battery->dev,
 			"%s: Failed to Register psy_wireless\n", __func__);
 		goto err_supply_unreg_ps;
 	}
 
-	battery->psy_usb = power_supply_register(&pdev->dev, &battery->psy_usb.desc, &psy_cfg);
+	battery->psy_usb = power_supply_register(&pdev->dev, battery->psy_usb->desc, &psy_cfg);
 	if (IS_ERR(battery->psy_usb)) {
 		dev_err(battery->dev,
 			"%s: Failed to Register psy_usb\n", __func__);
 		goto err_supply_unreg_wireless;
 	}
 
-	battery->psy_ac = power_supply_register(&pdev->dev, &battery->psy_ac.desc, &psy_cfg);
+	battery->psy_ac = power_supply_register(&pdev->dev, battery->psy_ac->desc, &psy_cfg);
 	if (IS_ERR(battery->psy_ac)) {
 		dev_err(battery->dev,
 			"%s: Failed to Register psy_ac\n", __func__);
 		goto err_supply_unreg_usb;
 	}
 
-	battery->psy_bat = power_supply_register(&pdev->dev, &battery->psy_bat.desc, &psy_cfg);
+	battery->psy_bat = power_supply_register(&pdev->dev, battery->psy_bat->desc, &psy_cfg);
 	if (IS_ERR(battery->psy_bat)) {
 		dev_err(battery->dev,
 			"%s: Failed to Register psy_bat\n", __func__);
@@ -5483,7 +5493,7 @@ static int sec_battery_probe(struct platform_device *pdev)
 	}
 #endif
 
-	ret = sec_bat_create_attrs(&battery->psy_bat.dev);
+	ret = sec_bat_create_attrs(&battery->psy_bat->dev);
 	if (ret) {
 		dev_err(battery->dev,
 			"%s : Failed to create_attrs\n", __func__);

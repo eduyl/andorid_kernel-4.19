@@ -680,7 +680,7 @@ static inline struct power_supply *get_power_supply_by_name(char *name)
 			__func__, (name));	\
 		value.intval = 0;	\
 	} else {	\
-		ret = psy->function##_property(psy, (property), &(value)); \
+		ret = psy->desc->function##_property(psy, (property), &(value)); \
 		if (ret < 0) {	\
 			pr_err("%s: Fail to "#name" "#function" (%d=>%d)\n", \
 				__func__, (property), ret);	\

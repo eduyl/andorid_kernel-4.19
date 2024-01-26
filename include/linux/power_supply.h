@@ -47,6 +47,7 @@ enum {
 	POWER_SUPPLY_CHARGE_TYPE_TRICKLE,
 	POWER_SUPPLY_CHARGE_TYPE_FAST,
 	POWER_SUPPLY_CHARGE_TYPE_TAPER,
+	POWER_SUPPLY_CHARGE_TYPE_SLOW,
 };
 
 enum {
@@ -404,6 +405,7 @@ enum power_supply_property {
 	POWER_SUPPLY_PROP_MANUFACTURER,
 	POWER_SUPPLY_PROP_BATTERY_TYPE,
 	POWER_SUPPLY_PROP_CYCLE_COUNTS,
+	POWER_SUPPLY_PROP_CHARGE_OTG_CONTROL,
 	/*
 	 * Add local extensions for properties with string values between
 	 * MODEL_NAME and SERIAL_NUMBER. Don't add below SERIAL_NUMBER.
@@ -413,33 +415,38 @@ enum power_supply_property {
 
 enum power_supply_type {
 	POWER_SUPPLY_TYPE_UNKNOWN = 0,
-	POWER_SUPPLY_TYPE_BATTERY,
-	POWER_SUPPLY_TYPE_UPS,
-	POWER_SUPPLY_TYPE_MAINS,
-	POWER_SUPPLY_TYPE_USB,			/* Standard Downstream Port */
-	POWER_SUPPLY_TYPE_USB_DCP,		/* Dedicated Charging Port */
-	POWER_SUPPLY_TYPE_USB_CDP,		/* Charging Downstream Port */
-	POWER_SUPPLY_TYPE_USB_ACA,		/* Accessory Charger Adapters */
-	POWER_SUPPLY_TYPE_USB_TYPE_C,		/* Type C Port */
-	POWER_SUPPLY_TYPE_USB_PD,		/* Power Delivery Port */
-	POWER_SUPPLY_TYPE_USB_PD_DRP,		/* PD Dual Role Port */
-	POWER_SUPPLY_TYPE_APPLE_BRICK_ID,	/* Apple Charging Method */
-	POWER_SUPPLY_TYPE_USB_HVDCP,		/* High Voltage DCP */
-	POWER_SUPPLY_TYPE_USB_HVDCP_3,		/* Efficient High Voltage DCP */
-	POWER_SUPPLY_TYPE_USB_HVDCP_3P5,	/* Efficient High Voltage DCP */
-	POWER_SUPPLY_TYPE_WIRELESS,		/* Accessory Charger Adapters */
-	POWER_SUPPLY_TYPE_USB_FLOAT,		/* Floating charger */
-	POWER_SUPPLY_TYPE_BMS,			/* Battery Monitor System */
-	POWER_SUPPLY_TYPE_PARALLEL,		/* Parallel Path */
-	POWER_SUPPLY_TYPE_MAIN,			/* Main Path */
-	POWER_SUPPLY_TYPE_UFP,			/* Type-C UFP */
-	POWER_SUPPLY_TYPE_DFP,			/* Type-C DFP */
-	POWER_SUPPLY_TYPE_CHARGE_PUMP,		/* Charge Pump */
-	POWER_SUPPLY_TYPE_SMART_OTG,		
-	POWER_SUPPLY_TYPE_SMART_NOTG,		
-	POWER_SUPPLY_TYPE_POWER_SHARING,
-	POWER_SUPPLY_TYPE_MDOCK_USB,
+	POWER_SUPPLY_TYPE_BATTERY,			/* 1 */
+	POWER_SUPPLY_TYPE_UPS,				/* 2 */
+	POWER_SUPPLY_TYPE_MAINS,			/* 3 */
+	POWER_SUPPLY_TYPE_USB,				/* Standard Downstream Port (4) */
+	POWER_SUPPLY_TYPE_USB_DCP,			/* Dedicated Charging Port (5) */
+	POWER_SUPPLY_TYPE_USB_CDP,			/* Charging Downstream Port (6) */
+	POWER_SUPPLY_TYPE_USB_ACA,			/* Accessory Charger Adapters (7) */
+	POWER_SUPPLY_TYPE_BMS,				/* Battery Monitor System (8) */
+	POWER_SUPPLY_TYPE_MISC,				/* 9 */
+	POWER_SUPPLY_TYPE_WIRELESS,			/* 10 */
+	POWER_SUPPLY_TYPE_CARDOCK,			/* 11 */
+	POWER_SUPPLY_TYPE_UARTOFF,			/* 12 */
+	POWER_SUPPLY_TYPE_OTG,				/* 13 */
+	POWER_SUPPLY_TYPE_LAN_HUB,			/* 14 */
+	POWER_SUPPLY_TYPE_MHL_500,			/* 15 */
+	POWER_SUPPLY_TYPE_MHL_900,			/* 16 */
+	POWER_SUPPLY_TYPE_MHL_1500,			/* 17 */
+	POWER_SUPPLY_TYPE_MHL_USB,			/* 18 */
+	POWER_SUPPLY_TYPE_SMART_OTG,		/* 19 */
+	POWER_SUPPLY_TYPE_SMART_NOTG,		/* 20 */
+	POWER_SUPPLY_TYPE_POWER_SHARING,		/* power sharing cable(21) */
+	POWER_SUPPLY_TYPE_HV_MAINS,             /* 22 */
+	POWER_SUPPLY_TYPE_HV_PREPARE_MAINS,
+	POWER_SUPPLY_TYPE_HV_ERR,             /* 24 */
+	POWER_SUPPLY_TYPE_MHL_USB_100,
+	POWER_SUPPLY_TYPE_MHL_2000,
+	POWER_SUPPLY_TYPE_HV_UNKNOWN,
+	POWER_SUPPLY_TYPE_MDOCK_TA,        /* Mdock charger */
+	POWER_SUPPLY_TYPE_MDOCK_USB,       /* Mdock USB */
+	POWER_SUPPLY_TYPE_WIRELESS_REMOVE, /* Always last value (23)*/
 };
+
 
 enum power_supply_usb_type {
 	POWER_SUPPLY_USB_TYPE_UNKNOWN = 0,
