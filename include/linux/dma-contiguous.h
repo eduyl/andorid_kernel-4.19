@@ -58,6 +58,13 @@
 struct cma;
 struct page;
 
+struct cma_info {
+	phys_addr_t	base;
+	size_t		size;
+	size_t		free;
+	bool		isolated;
+};
+
 #ifdef CONFIG_DMA_CMA
 
 extern struct cma *dma_contiguous_default_area;
