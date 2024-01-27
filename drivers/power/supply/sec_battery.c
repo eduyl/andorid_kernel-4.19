@@ -5193,15 +5193,54 @@ static void cable_initial_check(struct sec_battery_info *battery)
 	}
 }
 
+const struct power_supply_desc psy_bat_desc = {
+	.name = "battery",
+	.type = POWER_SUPPLY_TYPE_BATTERY,
+	.properties = sec_battery_props,
+	.num_properties = ARRAY_SIZE(sec_battery_props),
+	.get_property = sec_bat_get_property,
+	.set_property = sec_bat_set_property
+};
+
+const struct power_supply_desc psy_usb_desc = {
+	.name = "usb",
+	.type = POWER_SUPPLY_TYPE_USB,
+	.properties = sec_power_props,
+	.num_properties = ARRAY_SIZE(sec_power_props),
+	.get_property = sec_usb_get_property
+};
+
+const struct power_supply_desc psy_ac_desc = {
+	.name = "ac",
+	.type = POWER_SUPPLY_TYPE_MAINS,
+	.properties = sec_power_props,
+	.num_properties = ARRAY_SIZE(sec_power_props),
+	.get_property = sec_ac_get_property
+};
+
+const struct power_supply_desc psy_wireless_desc = {
+	.name = "wireless",
+	.type = POWER_SUPPLY_TYPE_WIRELESS,
+	.properties = sec_power_props,
+	.num_properties = ARRAY_SIZE(sec_power_props),
+	.get_property = sec_wireless_get_property,
+	.set_property = sec_wireless_set_property
+};
+
+const struct power_supply_desc psy_ps_desc {
+	.name = "ps",
+	.type = POWER_SUPPLY_TYPE_POWER_SHARING,
+	.properties = sec_ps_props,
+	.num_properties = ARRAY_SIZE(sec_ps_props),
+	.get_property = sec_ps_get_property,
+	.set_property = sec_ps_set_property
+};
+
 static int sec_battery_probe(struct platform_device *pdev)
 {
 	sec_battery_platform_data_t *pdata = NULL;
 	struct sec_battery_info *battery;
-	struct power_supply_config psy_cfg = {};
-	struct power_supply_desc *psy_bat_desc;
-	struct power_supply_desc *psy_usb_desc;
-	struct power_supply_desc *psy_ac_desc;
-	struct power_supply_desc *psy_wireless_desc;
+	struct power_supply_config psy_cfg = { .drv_data = battery };
 
 	int ret = 0;
 #ifndef CONFIG_OF
@@ -5346,47 +5385,17 @@ static int sec_battery_probe(struct platform_device *pdev)
 	if (battery->pdata->fuelgauge_name == NULL)
 		battery->pdata->fuelgauge_name = "sec-fuelgauge";
 
-	psy_bat_desc = battery->psy_bat->desc;
-	psy_ac_desc = battery->psy_ac->desc;
-	psy_usb_desc = battery->psy_usb->desc;
-	psy_wireless_desc = battery->psy_wireless->desc;
+	battery->psy_usb.supplied_to = supply_list;
+	battery->psy_usb.num_supplicants = ARRAY_SIZE(supply_list);
 
-	psy_bat_desc->name = "battery",
-	psy_bat_desc->type = POWER_SUPPLY_TYPE_BATTERY,
-	psy_bat_desc->properties = sec_battery_props,
-	psy_bat_desc->num_properties = ARRAY_SIZE(sec_battery_props),
-	psy_bat_desc->get_property = sec_bat_get_property,
-	psy_bat_desc->set_property = sec_bat_set_property,
-	psy_usb_desc->name = "usb",
-	psy_usb_desc->type = POWER_SUPPLY_TYPE_USB,
-	battery->psy_usb.supplied_to = supply_list,
-	battery->psy_usb.num_supplicants = ARRAY_SIZE(supply_list),
-	psy_usb_desc->properties = sec_power_props,
-	psy_usb_desc->num_properties = ARRAY_SIZE(sec_power_props),
-	psy_usb_desc->get_property = sec_usb_get_property,
-	psy_ac_desc->name = "ac",
-	psy_ac_desc->type = POWER_SUPPLY_TYPE_MAINS,
-	battery->psy_ac.supplied_to = supply_list,
-	battery->psy_ac.num_supplicants = ARRAY_SIZE(supply_list),
-	psy_ac_desc->properties = sec_power_props,
-	psy_ac_desc->num_properties = ARRAY_SIZE(sec_power_props),
-	psy_ac_desc->get_property = sec_ac_get_property;
-	psy_wireless_desc->name = "wireless",
-	psy_wireless_desc->type = POWER_SUPPLY_TYPE_WIRELESS,
-	battery->psy_wireless.supplied_to = supply_list,
-	battery->psy_wireless.num_supplicants = ARRAY_SIZE(supply_list),
-	psy_wireless_desc->properties = sec_power_props,
-	psy_wireless_desc->num_properties = ARRAY_SIZE(sec_power_props),
-	psy_wireless_desc->get_property = sec_wireless_get_property;
-	psy_wireless_desc->set_property = sec_wireless_set_property;
-	psy_ps_desc->name = "ps",
-	psy_ps_desc->type = POWER_SUPPLY_TYPE_POWER_SHARING,
-	battery->psy_ps.supplied_to = supply_list,
-	battery->psy_ps.num_supplicants = ARRAY_SIZE(supply_list),
-	psy_ps_desc->properties = sec_ps_props,
-	psy_ps_desc->num_properties = ARRAY_SIZE(sec_ps_props),
-	psy_ps_desc->get_property = sec_ps_get_property;
-	psy_ps_desc->set_property = sec_ps_set_property;
+	battery->psy_ac.supplied_to = supply_list;
+	battery->psy_ac.num_supplicants = ARRAY_SIZE(supply_list);
+
+	battery->psy_wireless.supplied_to = supply_list;
+	battery->psy_wireless.num_supplicants = ARRAY_SIZE(supply_list);
+
+	battery->psy_ps.supplied_to = supply_list;
+	battery->psy_ps.num_supplicants = ARRAY_SIZE(supply_list);
 
 #if defined (CONFIG_BATTERY_SWELLING_SELF_DISCHARGING)
 	if (battery->pdata->factory_discharging) {
@@ -5433,35 +5442,35 @@ static int sec_battery_probe(struct platform_device *pdev)
 	}
 
 	/* init power supplier framework */
-	battery->psy_ps = power_supply_register(&pdev->dev, battery->psy_ps->desc, &psy_cfg);
+	battery->psy_ps = power_supply_register(&pdev->dev, &psy_ps_desc, &psy_cfg);
 	if (IS_ERR(battery->psy_ps)) {
 		dev_err(battery->dev,
 			"%s: Failed to Register psy_ps\n", __func__);
 		goto err_workqueue;
 	}
 
-	battery->psy_wireless = power_supply_register(&pdev->dev, battery->psy_wireless->desc, &psy_cfg);
+	battery->psy_wireless = power_supply_register(&pdev->dev, &psy_wireless_desc, &psy_cfg);
 	if (IS_ERR(battery->psy_wireless)) {
 		dev_err(battery->dev,
 			"%s: Failed to Register psy_wireless\n", __func__);
 		goto err_supply_unreg_ps;
 	}
 
-	battery->psy_usb = power_supply_register(&pdev->dev, battery->psy_usb->desc, &psy_cfg);
+	battery->psy_usb = power_supply_register(&pdev->dev, &psy_usb_desc, &psy_cfg);
 	if (IS_ERR(battery->psy_usb)) {
 		dev_err(battery->dev,
 			"%s: Failed to Register psy_usb\n", __func__);
 		goto err_supply_unreg_wireless;
 	}
 
-	battery->psy_ac = power_supply_register(&pdev->dev, battery->psy_ac->desc, &psy_cfg);
+	battery->psy_ac = power_supply_register(&pdev->dev, &psy_ac_desc, &psy_cfg);
 	if (IS_ERR(battery->psy_ac)) {
 		dev_err(battery->dev,
 			"%s: Failed to Register psy_ac\n", __func__);
 		goto err_supply_unreg_usb;
 	}
 
-	battery->psy_bat = power_supply_register(&pdev->dev, battery->psy_bat->desc, &psy_cfg);
+	battery->psy_bat = power_supply_register(&pdev->dev, &psy_bat_desc, &psy_cfg);
 	if (IS_ERR(battery->psy_bat)) {
 		dev_err(battery->dev,
 			"%s: Failed to Register psy_bat\n", __func__);

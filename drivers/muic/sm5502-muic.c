@@ -2097,7 +2097,7 @@ static struct i2c_driver sm5502_muic_driver = {
 #endif /* CONFIG_PM */
 	},
 	.probe		= sm5502_muic_probe,
-	.remove		= __devexit_p(sm5502_muic_remove),
+	.remove		= sm5502_muic_remove,
 	.shutdown	= sm5502_muic_shutdown,
 	.id_table	= sm5502_i2c_id,
 };
