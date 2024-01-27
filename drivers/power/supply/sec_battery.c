@@ -3729,7 +3729,7 @@ static int sec_bat_set_property(struct power_supply *psy,
 				const union power_supply_propval *val)
 {
 	struct sec_battery_info *battery =
-		container_of(psy, struct sec_battery_info, psy_bat);
+		container_of(&psy, struct sec_battery_info, psy_bat);
 	int current_cable_type;
 	int full_check_type;
 
