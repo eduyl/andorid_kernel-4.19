@@ -413,7 +413,7 @@ err_return:
 	return ret;
 }
 
-static int __devexit muic_remove(struct i2c_client *i2c)
+static int muic_remove(struct i2c_client *i2c)
 {
 	muic_data_t *pmuic = i2c_get_clientdata(i2c);
 	sysfs_remove_group(&switch_device->kobj, &muic_sysfs_group);

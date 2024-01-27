@@ -2023,7 +2023,7 @@ err_return:
 	return ret;
 }
 
-static int __devexit sm5703_muic_remove(struct i2c_client *i2c)
+static int sm5703_muic_remove(struct i2c_client *i2c)
 {
 	struct sm5703_muic_data *muic_data = i2c_get_clientdata(i2c);
 	sysfs_remove_group(&switch_device->kobj, &sm5703_muic_group);
