@@ -2,6 +2,8 @@
 # Makefile for muic devices
 #
 
+ccflags-y += -I$(srctree)/arch/arm/mach-exynos/include
+
 obj-y					+= muic-core.o
 obj-$(CONFIG_MUIC_NOTIFIER)		+= muic_notifier.o
 obj-$(CONFIG_MUIC_MAX77804)		+= max77804-muic.o
