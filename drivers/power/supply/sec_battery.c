@@ -5240,7 +5240,7 @@ static int sec_battery_probe(struct platform_device *pdev)
 {
 	sec_battery_platform_data_t *pdata = NULL;
 	struct sec_battery_info *battery;
-	struct power_supply_config psy_cfg = { .drv_data = battery };
+	struct power_supply_config psy_cfg = {};
 
 	int ret = 0;
 #ifndef CONFIG_OF
@@ -5326,7 +5326,7 @@ static int sec_battery_probe(struct platform_device *pdev)
 	battery->stability_test = 0;
 	battery->eng_not_full_status = 0;
 #endif
-        battery->wc_status = 0;
+    battery->wc_status = 0;
 	battery->ps_status= 0;
 	battery->ps_changed= 0;
 	battery->wire_status = POWER_SUPPLY_TYPE_BATTERY;
