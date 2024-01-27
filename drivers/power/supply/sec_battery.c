@@ -5227,7 +5227,7 @@ const struct power_supply_desc psy_wireless_desc = {
 	.set_property = sec_wireless_set_property
 };
 
-const struct power_supply_desc psy_ps_desc {
+const struct power_supply_desc psy_ps_desc = {
 	.name = "ps",
 	.type = POWER_SUPPLY_TYPE_POWER_SHARING,
 	.properties = sec_ps_props,
@@ -5385,17 +5385,8 @@ static int sec_battery_probe(struct platform_device *pdev)
 	if (battery->pdata->fuelgauge_name == NULL)
 		battery->pdata->fuelgauge_name = "sec-fuelgauge";
 
-	battery->psy_usb.supplied_to = supply_list;
-	battery->psy_usb.num_supplicants = ARRAY_SIZE(supply_list);
-
-	battery->psy_ac.supplied_to = supply_list;
-	battery->psy_ac.num_supplicants = ARRAY_SIZE(supply_list);
-
-	battery->psy_wireless.supplied_to = supply_list;
-	battery->psy_wireless.num_supplicants = ARRAY_SIZE(supply_list);
-
-	battery->psy_ps.supplied_to = supply_list;
-	battery->psy_ps.num_supplicants = ARRAY_SIZE(supply_list);
+	psy_cfg.supplied_to = supply_list;
+	psy_cfg.num_supplicants = ARRAY_SIZE(supply_list);
 
 #if defined (CONFIG_BATTERY_SWELLING_SELF_DISCHARGING)
 	if (battery->pdata->factory_discharging) {
