@@ -2,7 +2,7 @@
 # Makefile for muic devices
 #
 
-ccflags-y += -I$(srctree)/arch/arm/mach-exynos/include
+ccflags-y += -I$(srctree)/arch/arm/mach-exynos/include -I$(srctree)/arch/arm/plat-samsung/include
 
 obj-y					+= muic-core.o
 obj-$(CONFIG_MUIC_NOTIFIER)		+= muic_notifier.o
