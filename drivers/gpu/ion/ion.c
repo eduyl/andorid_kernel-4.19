@@ -38,9 +38,11 @@
 #include <linux/idr.h>
 #include <linux/exynos_iovmm.h>
 #include <linux/highmem.h>
-
+#include <linux/sched/task.h>
+#include <linux/module.h>
 #include <asm/cacheflush.h>
 #include <asm/tlbflush.h>
+
 
 #include "ion_priv.h"
 
@@ -1139,14 +1141,15 @@ static void ion_buffer_sync_for_device(struct ion_buffer *buffer,
 	list_for_each_entry(vma_list, &buffer->vmas, list) {
 		struct vm_area_struct *vma = vma_list->vma;
 
-		zap_page_range(vma, vma->vm_start, vma->vm_end - vma->vm_start,
-			       NULL);
+		zap_page_range(vma, vma->vm_start, vma->vm_end - vma->vm_start);
 	}
 	mutex_unlock(&buffer->lock);
 }
 
-int ion_vm_fault(struct vm_area_struct *vma, struct vm_fault *vmf)
+//vm_fault_t (*fault)(struct vm_fault *vmf);
+vm_fault_t ion_vm_fault(struct vm_fault *vmf)
 {
+	struct vm_area_struct *vma = vmf->vma;
 	struct ion_buffer *buffer = vma->vm_private_data;
 	int ret;
 
@@ -1163,7 +1166,7 @@ int ion_vm_fault(struct vm_area_struct *vma, struct vm_fault *vmf)
 	vma->vm_flags |= VM_MIXEDMAP;
 
 	BUG_ON(!buffer->pages || !buffer->pages[vmf->pgoff]);
-	ret = vm_insert_page(vma, (unsigned long)vmf->virtual_address,
+	ret = vm_insert_page(vma, (unsigned long)vmf->address,
 			     ion_buffer_page(buffer->pages[vmf->pgoff]));
 	mutex_unlock(&buffer->lock);
 	if (ret)
@@ -1281,21 +1284,19 @@ static void ion_dma_buf_release(struct dma_buf *dmabuf)
 	ion_buffer_put(buffer);
 }
 
-static void *ion_dma_buf_kmap(struct dma_buf *dmabuf, unsigned long offset)
+//void *(*vmap)(struct dma_buf *);
+static void *ion_dma_buf_kmap(struct dma_buf *dmabuf)
 {
 	struct ion_buffer *buffer = dmabuf->priv;
-	return buffer->vaddr + offset * PAGE_SIZE;
+	return buffer->vaddr;
 }
-
-static void ion_dma_buf_kunmap(struct dma_buf *dmabuf, unsigned long offset,
-			       void *ptr)
+// void (*vunmap)(struct dma_buf *, void *vaddr);
+static void ion_dma_buf_kunmap(struct dma_buf *dmabuf, void *ptr)
 {
-	return;
+	// return;
 }
 
-static int ion_dma_buf_begin_cpu_access(struct dma_buf *dmabuf, size_t start,
-					size_t len,
-					enum dma_data_direction direction)
+static int ion_dma_buf_begin_cpu_access(struct dma_buf *dmabuf, enum dma_data_direction direction)
 {
 	struct ion_buffer *buffer = dmabuf->priv;
 	void *vaddr;
@@ -1313,10 +1314,8 @@ static int ion_dma_buf_begin_cpu_access(struct dma_buf *dmabuf, size_t start,
 		return PTR_ERR(vaddr);
 	return 0;
 }
-
-static void ion_dma_buf_end_cpu_access(struct dma_buf *dmabuf, size_t start,
-				       size_t len,
-				       enum dma_data_direction direction)
+//int (*end_cpu_access)(struct dma_buf *, enum dma_data_direction);
+int ion_dma_buf_end_cpu_access(struct dma_buf *dmabuf, enum dma_data_direction direction)
 {
 	struct ion_buffer *buffer = dmabuf->priv;
 
@@ -1332,10 +1331,13 @@ struct dma_buf_ops dma_buf_ops = {
 	.release = ion_dma_buf_release,
 	.begin_cpu_access = ion_dma_buf_begin_cpu_access,
 	.end_cpu_access = ion_dma_buf_end_cpu_access,
-	.kmap_atomic = ion_dma_buf_kmap,
-	.kunmap_atomic = ion_dma_buf_kunmap,
-	.kmap = ion_dma_buf_kmap,
-	.kunmap = ion_dma_buf_kunmap,
+	.vmap = ion_dma_buf_kmap,
+	.vunmap = ion_dma_buf_kunmap
+
+	// .kmap_atomic = ion_dma_buf_kmap,
+	// .kunmap_atomic = ion_dma_buf_kunmap,
+	// .kmap = ion_dma_buf_kmap,
+	// .kunmap = ion_dma_buf_kunmap,
 };
 
 struct dma_buf *ion_share_dma_buf(struct ion_client *client,
@@ -1344,6 +1346,7 @@ struct dma_buf *ion_share_dma_buf(struct ion_client *client,
 	struct ion_buffer *buffer;
 	struct dma_buf *dmabuf;
 	bool valid_handle;
+	DEFINE_DMA_BUF_EXPORT_INFO(exp_info);
 
 	mutex_lock(&client->lock);
 	valid_handle = ion_handle_validate(client, handle);
@@ -1357,7 +1360,13 @@ struct dma_buf *ion_share_dma_buf(struct ion_client *client,
 	ion_buffer_get(buffer);
 	mutex_unlock(&client->lock);
 
-	dmabuf = dma_buf_export(buffer, &dma_buf_ops, buffer->size, O_RDWR);
+	
+	exp_info.ops = &dma_buf_ops;
+	exp_info.size = buffer->size;
+	exp_info.flags = O_RDWR;
+	exp_info.priv = buffer;
+
+	dmabuf = dma_buf_export(&exp_info);
 	if (IS_ERR(dmabuf)) {
 		ion_buffer_put(buffer);
 		return dmabuf;
@@ -1744,7 +1753,7 @@ static int ion_debug_heap_show(struct seq_file *s, void *unused)
 		if (!buffer->handle_count) {
 			seq_printf(s, "%16.s %16u %16u %d %d\n", buffer->task_comm,
 				   buffer->pid, buffer->size, buffer->kmap_cnt,
-				   atomic_read(&buffer->ref.refcount));
+				   kref_read(&buffer->ref));
 			total_orphaned_size += buffer->size;
 		}
 	}
@@ -2124,7 +2133,7 @@ static int ion_debug_buffer_show(struct seq_file *s, void *unused)
 				buffer->task_comm, buffer->pid,
 				buffer->thread_comm,
 				buffer->tid, buffer->size, buffer->kmap_cnt,
-				atomic_read(&buffer->ref.refcount),
+				kref_read(&buffer->ref),
 				buffer->handle_count, master_name,
 				client_name, buffer->flags);
 		seq_printf(s, "(");

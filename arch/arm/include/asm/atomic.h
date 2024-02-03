@@ -158,6 +158,49 @@ static inline int atomic_fetch_add_unless(atomic_t *v, int a, int u)
 }
 #define atomic_fetch_add_unless		atomic_fetch_add_unless
 
+static inline void atomic_push(atomic_t *v, int value, int width)
+{
+	unsigned long tmp;
+	int result;
+
+	value &= (1 << width) - 1;
+
+	__asm__ __volatile("@ atomic_push\n"
+"1:	ldrex	%0, [%3]\n"
+"	lsl	%0, %5\n"
+"	orr	%0, %0, %4\n"
+"	strex	%1, %0, [%3]\n"
+"	teq	%1, #0\n"
+"	bne	1b"
+	: "=&r" (result), "=&r" (tmp), "+Qo" (v->counter)
+	: "r" (&v->counter), "Ir" (value), "Ir" (width)
+	: "cc");
+}
+
+static inline int atomic_pop(atomic_t *v, int width)
+{
+	unsigned long tmp;
+	int result;
+	int value;
+
+	smp_mb();
+
+	__asm__ __volatile("@ atomic_pop\n"
+"1:	ldrex	%1, [%4]\n"
+"	mov	%0, %1\n"
+"	lsr	%1, %1, %5\n"
+"	strex	%2, %1, [%4]\n"
+"	teq	%2, #0\n"
+"	bne	1b"
+	: "=&r" (result), "=&r" (value), "=&r" (tmp), "+Qo" (v->counter)
+	: "r" (&v->counter), "Ir" (width)
+	: "cc");
+
+	smp_mb();
+
+	return result & ((1 << width) - 1);
+}
+
 #else /* ARM_ARCH_6 */
 
 #ifdef CONFIG_SMP
