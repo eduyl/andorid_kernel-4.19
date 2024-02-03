@@ -28,6 +28,7 @@
 #include <linux/module.h>
 #include <linux/kthread.h>
 #include <asm/tlbflush.h>
+#include <uapi/linux/sched/types.h>
 #include "ion_priv.h"
 
 static unsigned int high_order_gfp_flags = (GFP_HIGHUSER | __GFP_NOWARN |
