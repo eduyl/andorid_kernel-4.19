@@ -23,6 +23,7 @@
 #include <linux/sched.h>
 #include <linux/scatterlist.h>
 #include <linux/vmalloc.h>
+#include <uapi/linux/sched/types.h>
 
 #include "ion_priv.h"
 
