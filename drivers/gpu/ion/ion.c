@@ -2140,7 +2140,7 @@ static int ion_debug_buffer_show(struct seq_file *s, void *unused)
 		seq_printf(s, "(");
 		ion_buffer_dump_flags(s, buffer->flags);
 		if (!strncmp(buffer->heap->name, "exynos_contig_heap", 18))
-			seq_printf(s, "|region%u",
+			seq_printf(s, "|region%lu",
 				__ffs((buffer->flags & 0xffff0000)) - 16);
 		seq_printf(s, ")\n");
 		mutex_unlock(&buffer->lock);

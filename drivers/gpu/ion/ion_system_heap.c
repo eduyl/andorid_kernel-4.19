@@ -29,6 +29,7 @@
 #include <linux/kthread.h>
 #include <asm/tlbflush.h>
 #include <uapi/linux/sched/types.h>
+#include <linux/sched/signal.h>
 #include "ion_priv.h"
 
 static unsigned int high_order_gfp_flags = (GFP_HIGHUSER | __GFP_NOWARN |
@@ -470,11 +471,11 @@ static int ion_system_heap_shrink(struct shrinker *shrinker,
 	 */
 	if ((shrink_shift < 0) || (shrink_shift > MAX_POOL_SHRINK_SHIFT))
 		shrink_shift = MAX_POOL_SHRINK_SHIFT;
-	other_avail = global_page_state(NR_FREE_PAGES)
-			+ global_page_state(NR_FILE_PAGES)
+	other_avail = global_zone_page_state(NR_FREE_PAGES)
+			+ global_zone_page_state(NR_FILE_PAGES)
 			- nr_total
 			- totalreserve_pages
-			- global_page_state(NR_SHMEM);
+			- global_zone_page_state(NR_SHMEM);
 	shift = (other_avail < 0) ? 0 : other_avail / nr_total;
 	shift = shrink_shift - shift;
 	if (shift < MIN_POOL_SHRINK_SHIFT)
