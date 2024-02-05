@@ -74,11 +74,11 @@ struct sec_battery_info {
 	struct device *dev;
 	sec_battery_platform_data_t *pdata;
 	/* power supply used in Android */
-	struct power_supply **psy_bat;
-	struct power_supply **psy_usb;
-	struct power_supply **psy_ac;
-	struct power_supply **psy_wireless;
-	struct power_supply **psy_ps;
+	struct power_supply *psy_bat;
+	struct power_supply *psy_usb;
+	struct power_supply *psy_ac;
+	struct power_supply *psy_wireless;
+	struct power_supply *psy_ps;
 	unsigned int irq;
 
 	struct notifier_block batt_nb;
@@ -106,7 +106,7 @@ struct sec_battery_info {
 	struct workqueue_struct *monitor_wqueue;
 	struct delayed_work monitor_work;
 #ifdef CONFIG_SAMSUNG_BATTERY_FACTORY
-	struct wakeup_source lpm_wake_lock;
+	struct wakeup_source *lpm_wake_lock;
 #endif
 	unsigned int polling_count;
 	unsigned int polling_time;
