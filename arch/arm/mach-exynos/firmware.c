@@ -185,39 +185,39 @@ static void exynos_l2_configure(const struct l2x0_regs *regs)
 	exynos_smc(SMC_CMD_L2X0SETUP2, regs->pwr_ctrl, regs->aux_ctrl, 0);
 }
 
-void __init exynos_firmware_init(void)
-{
-	struct device_node *nd;
-	const __be32 *addr;
+// void __init exynos_firmware_init(void)
+// {
+// 	struct device_node *nd;
+// 	const __be32 *addr;
 
-	nd = of_find_compatible_node(NULL, NULL,
-					"samsung,secure-firmware");
-	if (!nd)
-		return;
+// 	nd = of_find_compatible_node(NULL, NULL,
+// 					"samsung,secure-firmware");
+// 	if (!nd)
+// 		return;
 
-	addr = of_get_address(nd, 0, NULL, NULL);
-	of_node_put(nd);
-	if (!addr) {
-		pr_err("%s: No address specified.\n", __func__);
-		return;
-	}
+// 	addr = of_get_address(nd, 0, NULL, NULL);
+// 	of_node_put(nd);
+// 	if (!addr) {
+// 		pr_err("%s: No address specified.\n", __func__);
+// 		return;
+// 	}
 
-	pr_info("Running under secure firmware.\n");
+// 	pr_info("Running under secure firmware.\n");
 
-	register_firmware_ops(&exynos_firmware_ops);
+// 	register_firmware_ops(&exynos_firmware_ops);
 
-	/*
-	 * Exynos 4 SoCs (based on Cortex A9 and equipped with L2C-310),
-	 * running under secure firmware, require certain registers of L2
-	 * cache controller to be written in secure mode. Here .write_sec
-	 * callback is provided to perform necessary SMC calls.
-	 */
-	if (IS_ENABLED(CONFIG_CACHE_L2X0) &&
-	    read_cpuid_part() == ARM_CPU_PART_CORTEX_A9) {
-		outer_cache.write_sec = exynos_l2_write_sec;
-		outer_cache.configure = exynos_l2_configure;
-	}
-}
+// 	/*
+// 	 * Exynos 4 SoCs (based on Cortex A9 and equipped with L2C-310),
+// 	 * running under secure firmware, require certain registers of L2
+// 	 * cache controller to be written in secure mode. Here .write_sec
+// 	 * callback is provided to perform necessary SMC calls.
+// 	 */
+// 	if (IS_ENABLED(CONFIG_CACHE_L2X0) &&
+// 	    read_cpuid_part() == ARM_CPU_PART_CORTEX_A9) {
+// 		outer_cache.write_sec = exynos_l2_write_sec;
+// 		outer_cache.configure = exynos_l2_configure;
+// 	}
+// }
 
 #define REG_CPU_STATE_ADDR	(sysram_ns_base_addr + 0x28)
 #define BOOT_MODE_MASK		0x1f
