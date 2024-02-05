@@ -10,8 +10,9 @@
  * published by the Free Software Foundation.
  */
 
-
+#include <linux/sec_batt.h>
 #include <linux/power/sec_battery.h>
+
 
 bool slate_mode_state;
 static struct device_attribute sec_battery_attrs[] = {
