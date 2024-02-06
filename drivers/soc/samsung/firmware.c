@@ -21,7 +21,7 @@
 
 static void __iomem *ns_base;
 
-static int exynos_do_idle(void)
+int exynos_do_idle(unsigned long mode)
 {
 	exynos_smc(SMC_CMD_SLEEP, 0, 0, 0);
 	return 0;

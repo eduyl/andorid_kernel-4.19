@@ -552,6 +552,41 @@ static int ion_system_heap_debug_show(struct ion_heap *heap, struct seq_file *s,
 	return 0;
 }
 
+
+static unsigned long ion_shrink_scan(struct shrinker *shrink, struct shrink_control *sc)
+{ //ijh todo
+	return 0;
+}
+
+static unsigned long ion_shrink_count(struct shrinker *shrink, struct shrink_control *sc)
+{
+	struct ion_heap *heap = container_of(shrink, struct ion_heap,
+					     shrinker);
+	struct ion_system_heap *sys_heap = container_of(heap,
+							struct ion_system_heap,
+							heap);
+	int nr_total = 0;
+	int i;
+
+	gfp_t gfp_mask = sc->gfp_mask | __GFP_HIGHMEM;
+
+	/* total number of items is whatever the page pools are holding
+	   plus whatever's in the freelist */
+
+	for (i = 0; i < num_orders * 2; i++) {
+		struct ion_page_pool *pool = sys_heap->pools[i];
+		nr_total += ion_page_pool_shrink(pool, gfp_mask, 0);
+	}
+	nr_total += ion_heap_freelist_size(heap) / PAGE_SIZE;
+	return nr_total;
+}
+
+static struct shrinker ion_shrinker = {
+	.count_objects = ion_shrink_count,
+	.scan_objects = ion_shrink_scan,
+	.seeks = DEFAULT_SEEKS,
+};
+
 struct ion_heap *ion_system_heap_create(struct ion_platform_heap *unused)
 {
 	struct ion_system_heap *heap;
@@ -582,10 +617,10 @@ struct ion_heap *ion_system_heap_create(struct ion_platform_heap *unused)
 		heap->pools[i] = pool;
 	}
 
-	heap->heap.shrinker.shrink = ion_system_heap_shrink;
+	// heap->heap.shrinker.shrink = ion_system_heap_shrink;
 	heap->heap.shrinker.seeks = DEFAULT_SEEKS;
 	heap->heap.shrinker.batch = 0;
-	register_shrinker(&heap->heap.shrinker);
+	register_shrinker(&ion_shrinker);
 	heap->heap.debug_show = ion_system_heap_debug_show;
 	return &heap->heap;
 err_create_pool:
@@ -604,7 +639,7 @@ void ion_system_heap_destroy(struct ion_heap *heap)
 							struct ion_system_heap,
 							heap);
 	int i;
-
+	unregister_shrinker(&ion_shrinker);
 	for (i = 0; i < num_orders; i++)
 		ion_page_pool_destroy(sys_heap->pools[i]);
 	kfree(sys_heap->pools);

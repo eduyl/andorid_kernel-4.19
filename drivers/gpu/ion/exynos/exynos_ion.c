@@ -473,11 +473,12 @@ int ion_secure_protect(struct device *dev)
 		pr_err("%s: region %s is not secure region\n", __func__, cmadata->name);
 		return -EPERM;
 	}
-	if (atomic_inc_return(&cmadata->secure_ref.refcount) > 1)
+
+	if (kref_read(&cmadata->secure_ref) > 1)
 		return 0;
 
 	if (__ion_secure_protect(dev)) {
-		atomic_set(&cmadata->secure_ref.refcount, 0);
+		kref_init(&cmadata->secure_ref);
 		pr_crit("%s: protection failed for region %d\n",
 			__func__, cmadata->id);
 		return -EFAULT;
@@ -509,7 +510,7 @@ int ion_is_region_available(struct device *dev, unsigned long flags)
 	struct cma_info info;
 	bool protected = !!(flags & ION_FLAG_PROTECTED);
 	struct ion_exynos_cmadata *cmadata = dev_get_drvdata(dev);
-	bool region = (atomic_read(&cmadata->secure_ref.refcount) == 0)?
+	bool region = (kref_read(&cmadata->secure_ref) == 0)?
 		false : true;
 
 	if (protected == region) {
@@ -987,7 +988,7 @@ void exynos_ion_sync_dmabuf_for_device(struct device *dev,
 			__func__, dev ? dev_name(dev) : "null", buffer, size);
 
 	if (ion_buffer_need_flush_all(buffer))
-		flush_all_cpu_caches();
+		flush_cache_all();
 	else if (!IS_ERR_OR_NULL(buffer->vaddr))
 		dmac_map_area(buffer->vaddr, size, dir);
 	else
@@ -1762,7 +1763,7 @@ static int __init ion_exynos_contigheap_init(void)
 			MAX_CONTIG_NAME);
 #ifndef CONFIG_MFC_TRELTE
 		drvdata->secure = exynos_ion_contig_region[i].secure;
-		atomic_set(&drvdata->secure_ref.refcount, 0);
+		kref_put(&drvdata->secure_ref, 0);
 #endif
 
 		dev = device_create(ion_cma_class,

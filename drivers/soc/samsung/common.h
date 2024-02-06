@@ -13,6 +13,7 @@
 #define __ARCH_ARM_MACH_EXYNOS_COMMON_H
 
 #include <linux/of.h>
+#include <linux/reboot.h>
 
 void mct_init(void __iomem *base, int irq_g0, int irq_l0, int irq_l1);
 void exynos_init_time(void);
@@ -23,7 +24,7 @@ void exynos_init_io(struct map_desc *mach_desc, int size);
 void exynos4_init_irq(void);
 void exynos5_init_irq(void);
 void exynos4_restart(char mode, const char *cmd);
-void exynos5_restart(char mode, const char *cmd);
+void exynos5_restart(enum reboot_mode mode, const char *cmd);
 void exynos_init_late(void);
 
 /* ToDo: remove these after migrating legacy exynos4 platforms to dt */

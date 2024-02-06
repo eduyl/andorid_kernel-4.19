@@ -79,6 +79,6 @@ DT_MACHINE_START(UNIVERSAL5433, "UNIVERSAL5433")
 	.init_late	= exynos_init_late,
 	.init_time	= exynos_init_time,
 	.dt_compat	= universal5433_dt_compat,
-	.restart        = exynos5_restart,
+	.restart	= exynos5_restart,
 	.reserve	= universal5433_reserve,
 MACHINE_END
