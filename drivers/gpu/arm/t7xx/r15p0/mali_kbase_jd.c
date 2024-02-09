@@ -297,7 +297,7 @@ static int kbase_jd_pre_external_resources(struct kbase_jd_atom *katom, const st
 	struct kbase_dma_fence_resv_info info = {
 		.dma_fence_resv_count = 0,
 	};
-#ifdef CONFIG_SYNC
+#ifdef CONFIG_SYNC_FILE 
 	/*
 	 * When both dma-buf fence and Android native sync is enabled, we
 	 * disable dma-buf fence for contexts that are using Android native

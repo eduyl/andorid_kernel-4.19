@@ -24,7 +24,7 @@
 #include <asm/cacheflush.h>
 #endif /* defined(CONFIG_DMA_SHARED_BUFFER) */
 #include <linux/dma-mapping.h>
-#ifdef CONFIG_SYNC
+#ifdef CONFIG_SYNC_FILE 
 #include "sync.h"
 #include <linux/syscalls.h>
 #include "mali_kbase_sync.h"
@@ -194,7 +194,7 @@ static int kbase_dump_cpu_gpu_time(struct kbase_jd_atom *katom)
 	return 0;
 }
 
-#ifdef CONFIG_SYNC
+#ifdef CONFIG_SYNC_FILE 
 
 static enum base_jd_event_code kbase_fence_trigger(struct kbase_jd_atom *katom, int result)
 {
@@ -1298,7 +1298,7 @@ int kbase_process_soft_job(struct kbase_jd_atom *katom)
 	switch (katom->core_req & BASE_JD_REQ_SOFT_JOB_TYPE) {
 	case BASE_JD_REQ_SOFT_DUMP_CPU_GPU_TIME:
 		return kbase_dump_cpu_gpu_time(katom);
-#ifdef CONFIG_SYNC
+#ifdef CONFIG_SYNC_FILE 
 	case BASE_JD_REQ_SOFT_FENCE_TRIGGER:
 		KBASE_DEBUG_ASSERT(katom->fence != NULL);
 		katom->event_code = kbase_fence_trigger(katom, katom->event_code == BASE_JD_EVENT_DONE ? 0 : -EFAULT);
@@ -1364,7 +1364,7 @@ void kbase_cancel_soft_job(struct kbase_jd_atom *katom)
 	}
 
 	switch (katom->core_req & BASE_JD_REQ_SOFT_JOB_TYPE) {
-#ifdef CONFIG_SYNC
+#ifdef CONFIG_SYNC_FILE 
 	case BASE_JD_REQ_SOFT_FENCE_WAIT:
 		kbase_fence_cancel_wait(katom);
 		break;
@@ -1390,7 +1390,7 @@ int kbase_prepare_soft_job(struct kbase_jd_atom *katom)
 				return -EINVAL;
 		}
 		break;
-#ifdef CONFIG_SYNC
+#ifdef CONFIG_SYNC_FILE 
 	case BASE_JD_REQ_SOFT_FENCE_TRIGGER:
 		{
 			struct base_fence fence;
@@ -1480,7 +1480,7 @@ void kbase_finish_soft_job(struct kbase_jd_atom *katom)
 	case BASE_JD_REQ_SOFT_DUMP_CPU_GPU_TIME:
 		/* Nothing to do */
 		break;
-#ifdef CONFIG_SYNC
+#ifdef CONFIG_SYNC_FILE 
 	case BASE_JD_REQ_SOFT_FENCE_TRIGGER:
 		/* If fence has not yet been signalled, do it now */
 		if (katom->fence) {

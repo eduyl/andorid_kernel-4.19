@@ -453,7 +453,6 @@ int gpu_vendor_dispatch(struct kbase_context *kctx, void * const args, u32 args_
 #include <mali_kbase_gpu_memory_debugfs.h>
 int gpu_memory_seq_show(struct seq_file *sfile, void *data)
 {
-	ssize_t ret = 0;
 	struct list_head *entry;
 	const struct list_head *kbdev_list;
 	size_t free_size = 0;
@@ -473,24 +472,24 @@ int gpu_memory_seq_show(struct seq_file *sfile, void *data)
 			spin_unlock(&(element->kctx->mem_pool.pool_lock));
 		}
 		mutex_unlock(&kbdev->kctx_list_lock);
-		ret = seq_printf(sfile, "===========================================================\n");
-		ret = seq_printf(sfile, " %16s  %18s  %20s\n", \
+		seq_printf(sfile, "===========================================================\n");
+		seq_printf(sfile, " %16s  %18s  %20s\n", \
 				"dev name", \
 				"total used pages", \
 				"total shrink pages");
-		ret = seq_printf(sfile, "-----------------------------------------------------------\n");
-		ret = seq_printf(sfile, " %16s  %18u  %20zu\n", \
+		seq_printf(sfile, "-----------------------------------------------------------\n");
+		seq_printf(sfile, " %16s  %18u  %20zu\n", \
 				kbdev->devname, \
 				atomic_read(&(kbdev->memdev.used_pages)), \
 				free_size);
-		ret = seq_printf(sfile, "===========================================================\n\n");
-		ret = seq_printf(sfile, "%28s     %20s  %16s  %12s\n", \
+		seq_printf(sfile, "===========================================================\n\n");
+		seq_printf(sfile, "%28s     %20s  %16s  %12s\n", \
 				"context name", \
 				"context addr", \
 				"used pages", \
 				"shrink pages");
-		ret = seq_printf(sfile, "====================================================");
-		ret = seq_printf(sfile, "========================================\n");
+		seq_printf(sfile, "====================================================");
+		seq_printf(sfile, "========================================\n");
 		mutex_lock(&kbdev->kctx_list_lock);
 		list_for_each_entry(element, &kbdev->kctx_list, link) {
 			/* output the memory usage and cap for each kctx
@@ -499,7 +498,7 @@ int gpu_memory_seq_show(struct seq_file *sfile, void *data)
 			spin_lock(&(element->kctx->mem_pool.pool_lock));
 			each_free_size = element->kctx->mem_pool.cur_size;
 			spin_unlock(&(element->kctx->mem_pool.pool_lock));
-			ret = seq_printf(sfile, "  (%24s), %s-0x%pK    %12u  %10zu\n", \
+			seq_printf(sfile, "  (%24s), %s-0x%pK    %12u  %10zu\n", \
 					element->kctx->name, \
 					"kctx", \
 					element->kctx, \
@@ -509,7 +508,7 @@ int gpu_memory_seq_show(struct seq_file *sfile, void *data)
 		mutex_unlock(&kbdev->kctx_list_lock);
 	}
 	kbase_dev_list_put(kbdev_list);
-	return ret;
+	return 0;
 }
 
 void gpu_update_status(void *dev, char *str, u32 val)
@@ -796,13 +795,14 @@ static void kbase_fence_dump(struct sync_fence *fence)
 }
 #endif
 
-/* MALI_SEC_INTEGRATION */
-static void kbase_fence_timeout(unsigned long data)
+static void kbase_fence_timeout(struct timer_list *tl)
 {
 	struct kbase_jd_atom *katom;
 	unsigned long flags;
 
-	katom = (struct kbase_jd_atom *)data;
+	katom = (struct kbase_jd_atom *)from_timer(t, tl, timer);
+
+	//katom = (struct kbase_jd_atom *)data;
 	KBASE_DEBUG_ASSERT(NULL != katom);
 
 	if (katom == NULL || katom->fence == NULL)
@@ -860,9 +860,10 @@ void kbase_fence_timer_init(void *atom)
 	if (katom == NULL)
 		return;
 
-	init_timer(&katom->fence_timer);
-	katom->fence_timer.function = kbase_fence_timeout;
-	katom->fence_timer.data = (unsigned long)katom;
+	timer_setup(&katom->fence_timer, kbase_fence_timeout, 0);
+	//init_timer(&katom->fence_timer);
+	//katom->fence_timer.function = kbase_fence_timeout;
+	//katom->fence_timer.data = (unsigned long)katom;
 	katom->fence_timer.expires = jiffies + timeout;
 
 	add_timer(&katom->fence_timer);
@@ -879,6 +880,7 @@ void kbase_fence_del_timer(void *atom)
 	if (katom == NULL)
 		return;
 
+//void			(*function)(struct timer_list *);
 	if (katom->fence_timer.function == kbase_fence_timeout)
 		del_timer(&katom->fence_timer);
 	katom->fence_timer.function = NULL;

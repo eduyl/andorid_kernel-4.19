@@ -22,6 +22,18 @@ config EXYNOS_PM_DOMAINS
 	depends on PM_GENERIC_DOMAINS || COMPILE_TEST
 
 config MACH_UNIVERSAL5433
-	bool "Exynos universal 5433"
+	bool "SAMSUNG UNIVERSAL5433 Machine using device tree"
+	default y
+	depends on ARCH_EXYNOS5 && SOC_EXYNOS5433
+	select ARM_AMBA
+	select CLKSRC_OF
+	select PINCTRL
+	select PINCTRL_EXYNOS
+	select USE_OF
+	select MIGHT_HAVE_PCI
+	select PCI_DOMAINS if PCI
+	help
+	  Machine support for Samsung EXYNOS5433 machine with device tree enabled.
+	  Select this if a fdt blob is available for the EXYNOS5433 SoC based board.
 
 endif

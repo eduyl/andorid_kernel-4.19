@@ -126,4 +126,73 @@ config EXYNOS_CPU_SUSPEND
 	select ARM_CPU_SUSPEND
 	default PM_SLEEP || ARM_EXYNOS_CPUIDLE
 
+config SOC_EXYNOS5433
+	bool "SAMSUNG EXYNOS5433"
+	default n
+	depends on ARCH_EXYNOS5
+	select PM_GENERIC_DOMAINS if PM
+	select S5P_PM if PM
+	select S5P_SLEEP if SUSPEND
+	select SAMSUNG_DMADEV
+	select EXYNOS_HSI2C_RESET_DURING_DSTOP if CPU_IDLE
+	select EXYNOS_SPI_RESET_DURING_DSTOP if CPU_IDLE
+	select EXYNOS_PWM_RESET_DURING_DSTOP if CPU_IDLE
+	select CAL_SYS_PWRDOWN
+	select SECCOMP
+	help
+	  Enable EXYNOS5433 SoC support
+
+
+choice
+	prompt "Revision Type"
+	depends on SOC_EXYNOS5433
+	help
+	  This option selects cpu revision number.
+
+config SOC_EXYNOS5433_REV_0
+	bool "Rev 0.0"
+
+config SOC_EXYNOS5433_REV_1
+	bool "Rev 1.0"
+
+endchoice
+
+config EXYNOS5433_BTS
+	bool "Bus traffic shaper support"
+	default y
+	depends on SOC_EXYNOS5433
+	help
+	  Enable BTS (Bus traffic shaper) support
+
 endif
+
+menuconfig EXYNOS_CORESIGHT
+	bool "Enable Coresight of exynos"
+	depends on ARCH_EXYNOS
+	default n
+
+config EXYNOS_CORESIGHT_PC_INFO
+	bool "Show Porgram Counter information"
+	depends on EXYNOS_CORESIGHT
+	default y
+	help
+	  Show Program Counter information When kernel panic.
+
+config PC_ITERATION
+	int "Number of Program Coutner information"
+	depends on EXYNOS_CORESIGHT_PC_INFO
+	range 1 10
+	default 5
+	help
+	  Print out Program Counter as iteration value.
+
+config EXYNOS_CORESIGHT_MAINTAIN_DBG_REG
+	bool "Save/Restore Debug Registers"
+	depends on EXYNOS_CORESIGHT
+	default n
+	help
+	  When core power is down, debug registers are not mainained data
+	  and OS-lock is set. To maintain data, debug registers's data must
+	  save in /restore from memory. If OS-lock is set, debugging to use
+	  trace32 is impossible. So OS-lock must clear when core power is up.
+	  This config must enable only using iTSP program.

@@ -70,7 +70,7 @@
 #ifdef CONFIG_MALI_PLATFORM_FAKE
 #include <platform/mali_kbase_platform_fake.h>
 #endif /*CONFIG_MALI_PLATFORM_FAKE */
-#ifdef CONFIG_SYNC
+#ifdef CONFIG_SYNC_FILE 
 #include <mali_kbase_sync.h>
 #endif /* CONFIG_SYNC */
 #ifdef CONFIG_PM_DEVFREQ_ARM
@@ -723,7 +723,7 @@ copy_failed:
 
 	case KBASE_FUNC_STREAM_CREATE:
 		{
-#ifdef CONFIG_SYNC
+#ifdef CONFIG_SYNC_FILE 
 			struct kbase_uk_stream_create *screate = (struct kbase_uk_stream_create *)args;
 
 			if (sizeof(*screate) != args_size)
@@ -746,7 +746,7 @@ copy_failed:
 		}
 	case KBASE_FUNC_FENCE_VALIDATE:
 		{
-#ifdef CONFIG_SYNC
+#ifdef CONFIG_SYNC_FILE 
 			struct kbase_uk_fence_validate *fence_validate = (struct kbase_uk_fence_validate *)args;
 
 			if (sizeof(*fence_validate) != args_size)

@@ -1,6 +1,9 @@
 menu "Clock Source drivers"
 	depends on GENERIC_CLOCKEVENTS
 
+config CLKSRC_OF
+	bool
+
 config TIMER_OF
 	bool
 	select TIMER_PROBE
@@ -312,6 +315,7 @@ config ARC_TIMERS_64BIT
 config ARM_ARCH_TIMER
 	bool
 	select TIMER_OF if OF
+	select CLKSRC_OF if OF
 	select TIMER_ACPI if ACPI
 
 config ARM_ARCH_TIMER_EVTSTREAM

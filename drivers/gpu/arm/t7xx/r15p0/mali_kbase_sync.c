@@ -15,7 +15,7 @@
 
 
 
-#ifdef CONFIG_SYNC
+#ifdef CONFIG_SYNC_FILE 
 
 #include <linux/seq_file.h>
 #include "sync.h"

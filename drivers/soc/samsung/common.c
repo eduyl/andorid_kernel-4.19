@@ -88,28 +88,29 @@ unsigned long xxti_f = 0, xusbxti_f = 0;
 struct exynos_cpu_power_ops exynos_cpu;
 
 static struct cpu_table cpu_ids[] __initdata = {
-	{
-		.idcode		= EXYNOS4210_CPU_ID,
-		.idmask		= EXYNOS4_CPU_MASK,
-		.map_io		= exynos4_map_io,
-		.init_uarts	= exynos4_init_uarts,
-		.init		= exynos_init,
-		.name		= name_exynos4210,
-	}, {
-		.idcode		= EXYNOS4212_CPU_ID,
-		.idmask		= EXYNOS4_CPU_MASK,
-		.map_io		= exynos4_map_io,
-		.init_uarts	= exynos4_init_uarts,
-		.init		= exynos_init,
-		.name		= name_exynos4212,
-	}, {
-		.idcode		= EXYNOS4412_CPU_ID,
-		.idmask		= EXYNOS4_CPU_MASK,
-		.map_io		= exynos4_map_io,
-		.init_uarts	= exynos4_init_uarts,
-		.init		= exynos_init,
-		.name		= name_exynos4412,
-	}, {
+	// {
+	// 	.idcode		= EXYNOS4210_CPU_ID,
+	// 	.idmask		= EXYNOS4_CPU_MASK,
+	// 	.map_io		= exynos4_map_io,
+	// 	.init_uarts	= exynos4_init_uarts,
+	// 	.init		= exynos_init,
+	// 	.name		= name_exynos4210,
+	// }, {
+	// 	.idcode		= EXYNOS4212_CPU_ID,
+	// 	.idmask		= EXYNOS4_CPU_MASK,
+	// 	.map_io		= exynos4_map_io,
+	// 	.init_uarts	= exynos4_init_uarts,
+	// 	.init		= exynos_init,
+	// 	.name		= name_exynos4212,
+	// }, {
+	// 	.idcode		= EXYNOS4412_CPU_ID,
+	// 	.idmask		= EXYNOS4_CPU_MASK,
+	// 	.map_io		= exynos4_map_io,
+	// 	.init_uarts	= exynos4_init_uarts,
+	// 	.init		= exynos_init,
+	// 	.name		= name_exynos4412,
+	// },
+	 {
 		.idcode		= EXYNOS5250_SOC_ID,
 		.idmask		= EXYNOS5_SOC_MASK,
 		.map_io		= exynos5_map_io,

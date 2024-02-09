@@ -50,7 +50,7 @@
 #include <linux/kds.h>
 #endif				/* CONFIG_KDS */
 
-#ifdef CONFIG_SYNC
+#ifdef CONFIG_SYNC_FILE
 #include "sync.h"
 #endif				/* CONFIG_SYNC */
 
@@ -448,7 +448,7 @@ struct kbase_jd_atom {
 	struct kds_resource_set *kds_rset;
 	bool kds_dep_satisfied;
 #endif				/* CONFIG_KDS */
-#ifdef CONFIG_SYNC
+#ifdef CONFIG_SYNC_FILE
 	struct sync_fence *fence;
 	struct sync_fence_waiter sync_waiter;
 /* MALI_SEC_INTEGRATION */

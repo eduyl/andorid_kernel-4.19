@@ -22,7 +22,7 @@
  *
  */
 
-#ifdef CONFIG_SYNC
+#ifdef CONFIG_SYNC_FILE 
 
 #include <linux/sched.h>
 #include <linux/fdtable.h>
