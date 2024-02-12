@@ -278,7 +278,7 @@ void kbase_finish_soft_job(struct kbase_jd_atom *katom);
 void kbase_cancel_soft_job(struct kbase_jd_atom *katom);
 void kbase_resume_suspended_soft_jobs(struct kbase_device *kbdev);
 void kbasep_remove_waiting_soft_job(struct kbase_jd_atom *katom);
-#if defined(CONFIG_SYNC) || defined(CONFIG_SYNC_FILE)
+#if defined(CONFIG_SYNC_FILE)
 void kbase_soft_event_wait_callback(struct kbase_jd_atom *katom);
 #endif
 int kbase_soft_event_update(struct kbase_context *kctx,
@@ -287,7 +287,7 @@ int kbase_soft_event_update(struct kbase_context *kctx,
 
 bool kbase_replay_process(struct kbase_jd_atom *katom);
 
-void kbasep_soft_job_timeout_worker(unsigned long data);
+void kbasep_soft_job_timeout_worker(struct timer_list *timer);
 void kbasep_complete_triggered_soft_events(struct kbase_context *kctx, u64 evt);
 
 /* api used internally for register access. Contains validation and tracing */

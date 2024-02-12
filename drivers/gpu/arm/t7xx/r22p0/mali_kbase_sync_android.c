@@ -34,7 +34,8 @@
 #include <linux/module.h>
 #include <linux/anon_inodes.h>
 #include <linux/version.h>
-#include "sync.h"
+#include "../../../../android/sync.h"
+#include "../../../../dma-buf/sync_debug.h"
 #include <mali_kbase.h>
 #include <mali_kbase_sync.h>
 
@@ -74,7 +75,7 @@ static struct sync_pt *timeline_dup(struct sync_pt *pt)
 {
 	struct mali_sync_pt *mpt = to_mali_sync_pt(pt);
 	struct mali_sync_pt *new_mpt;
-	struct sync_pt *new_pt = sync_pt_create(sync_pt_parent(pt),
+	struct sync_pt *new_pt = sync_pt_create(dma_fence_parent(pt->fence),
 						sizeof(struct mali_sync_pt));
 
 	if (!new_pt)
@@ -379,7 +380,8 @@ kbase_sync_fence_out_trigger(struct kbase_jd_atom *katom, int result)
 #if LINUX_VERSION_CODE < KERNEL_VERSION(3, 17, 0)
 	if (!list_is_singular(&katom->fence->pt_list_head)) {
 #else
-	if (katom->fence->num_fences != 1) {
+	if (!list_is_singular(katom->fence->sync_fence_list)) {
+	//if (katom->fence->num_fences != 1) {
 #endif
 		/* Not exactly one item in the list - so it didn't (directly)
 		 * come from us */
@@ -413,11 +415,7 @@ static inline int kbase_fence_get_status(struct sync_fence *fence)
 	if (!fence)
 		return -ENOENT;
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(3, 17, 0)
-	return fence->status;
-#else
-	return atomic_read(&fence->status);
-#endif
+	return fence->status; //atomic_read(&fence->status);
 }
 
 static void kbase_fence_wait_callback(struct sync_fence *fence,

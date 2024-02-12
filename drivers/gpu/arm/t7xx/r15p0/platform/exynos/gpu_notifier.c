@@ -31,11 +31,7 @@
 #include "gpu_control.h"
 
 #ifdef CONFIG_EXYNOS_THERMAL
-#if LINUX_VERSION_CODE < KERNEL_VERSION(3, 17, 0)
-#include <mach/tmu.h>
-#else
 #include <soc/samsung/tmu.h>
-#endif
 #endif /* CONFIG_EXYNOS_THERMAL */
 
 #ifdef CONFIG_EXYNOS_NOC_DEBUGGING

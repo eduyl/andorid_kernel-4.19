@@ -37,7 +37,7 @@
 
 extern struct kbase_device *pkbdev;
 
-#define CPU_MAX PM_QOS_CPU_FREQ_MAX_DEFAULT_VALUE
+#define CPU_MAX PM_QOS_RESUME_LATENCY_DEFAULT_VALUE
 #define G3D_RBB_VALUE	0x8d
 
 #define GPU_OSC_CLK	24000

@@ -16,6 +16,8 @@ MALI_CUSTOMER_RELEASE = 1
 
 soc_name := $(shell echo $(CONFIG_EXYNOS_SOC_NAME))
 
+ccflags-y := -I$(srctree)/drivers/soc/samsung/include -I$(srctree)/arch/arm/mach-exynos/include -I$(srctree)/arch/arm/plat-samsung/include
+
 obj-y += gpu_integration_callbacks.o
 obj-y += mali_kbase_platform.o
 obj-y += gpu_notifier.o

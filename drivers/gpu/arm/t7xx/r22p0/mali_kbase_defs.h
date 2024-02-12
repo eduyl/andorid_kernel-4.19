@@ -53,8 +53,8 @@
 #endif
 
 
-#if defined(CONFIG_SYNC)
-#include <sync.h>
+#if defined(CONFIG_SYNC_FILE)
+#include "../../../android/sync.h"
 #else
 #include "mali_kbase_fence_defs.h"
 #endif
@@ -459,7 +459,7 @@ struct kbase_jd_atom {
 	/* Copy of data read from the user space buffer that jc points to */
 	void *softjob_data;
 	enum kbase_atom_coreref_state coreref_state;
-#if defined(CONFIG_SYNC)
+#if defined(CONFIG_SYNC_FILE)
 	/* Stores either an input or output fence, depending on soft-job type */
 	struct sync_fence *fence;
 	struct sync_fence_waiter sync_waiter;

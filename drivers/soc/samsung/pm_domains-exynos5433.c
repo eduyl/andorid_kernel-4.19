@@ -16,7 +16,7 @@
 #include <linux/mutex.h>
 #include <linux/mfd/samsung/core.h>
 
-#include "mach/tmu.h"
+#include "soc/samsung/tmu.h"
 #include "pm_domains-exynos5433.h"
 
 static void exynos5_pd_enable_clk(struct exynos5430_pd_state *ptr, int nr_regs)

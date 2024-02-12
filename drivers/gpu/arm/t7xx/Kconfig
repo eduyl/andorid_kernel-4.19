@@ -29,8 +29,6 @@ menuconfig MALI_T7XX
 choice
 	prompt "version Configuration"
 	depends on MALI_T7XX
-	default MALI_R7P0 if  DDK_VERSION_OS = "m"
-	default MALI_R12P0 if DDK_VERSION_OS = "n"
 	default MALI_R22P0 if DDK_VERSION_OS = "o"
 	help
 	  Select the gpu support version.

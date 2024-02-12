@@ -72,9 +72,9 @@
 #include <linux/mman.h>
 #include <linux/version.h>
 #include <mali_kbase_hw.h>
-#if defined(CONFIG_SYNC) || defined(CONFIG_SYNC_FILE)
+#if defined(CONFIG_SYNC_FILE)
 #include <mali_kbase_sync.h>
-#endif /* CONFIG_SYNC || CONFIG_SYNC_FILE */
+#endif /* CONFIG_SYNC_FILE */
 #include <linux/clk.h>
 #include <linux/delay.h>
 #include <linux/log2.h>
@@ -866,7 +866,7 @@ static int kbase_api_mem_flags_change(struct kbase_context *kctx,
 static int kbase_api_stream_create(struct kbase_context *kctx,
 		struct kbase_ioctl_stream_create *stream)
 {
-#if defined(CONFIG_SYNC) || defined(CONFIG_SYNC_FILE)
+#if defined(CONFIG_SYNC_FILE)
 	int fd, ret;
 
 	/* Name must be NULL-terminated and padded with NULLs, so check last
@@ -888,7 +888,7 @@ static int kbase_api_stream_create(struct kbase_context *kctx,
 static int kbase_api_fence_validate(struct kbase_context *kctx,
 		struct kbase_ioctl_fence_validate *validate)
 {
-#if defined(CONFIG_SYNC) || defined(CONFIG_SYNC_FILE)
+#if defined(CONFIG_SYNC_FILE)
 	return kbase_sync_fence_validate(validate->fd);
 #else
 	return -ENOENT;

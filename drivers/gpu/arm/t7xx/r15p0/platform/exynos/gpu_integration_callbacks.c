@@ -880,7 +880,6 @@ void kbase_fence_del_timer(void *atom)
 	if (katom == NULL)
 		return;
 
-//void			(*function)(struct timer_list *);
 	if (katom->fence_timer.function == kbase_fence_timeout)
 		del_timer(&katom->fence_timer);
 	katom->fence_timer.function = NULL;

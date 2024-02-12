@@ -32,10 +32,8 @@
 #define MALI_KBASE_SYNC_H
 
 #include <linux/syscalls.h>
-#ifdef CONFIG_SYNC
-#include <sync.h>
-#endif
 #ifdef CONFIG_SYNC_FILE
+#include <sync.h>
 #include "mali_kbase_fence_defs.h"
 #include <linux/sync_file.h>
 #endif

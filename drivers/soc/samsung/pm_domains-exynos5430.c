@@ -17,7 +17,7 @@
 
 #include <mach/pm_domains.h>
 #include <mach/devfreq.h>
-#include <mach/tmu.h>
+#include <soc/samsung/tmu.h>
 
 static DEFINE_SPINLOCK(rpmlock_cmutop);
 

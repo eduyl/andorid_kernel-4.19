@@ -31,11 +31,7 @@
 #include "gpu_control.h"
 
 #ifdef CONFIG_EXYNOS_THERMAL
-#if LINUX_VERSION_CODE < KERNEL_VERSION(3, 17, 0)
-#include <mach/tmu.h>
-#else
 #include <soc/samsung/tmu.h>
-#endif
 #endif /* CONFIG_EXYNOS_THERMAL */
 
 #ifdef CONFIG_EXYNOS_NOC_DEBUGGING
@@ -159,6 +155,7 @@ static int gpu_pm_notifier(struct notifier_block *nb, unsigned long event, void 
 	return err;
 }
 
+#ifdef CONFIG_EXYNOS_BUSMONITOR
 static int gpu_noc_notifier(struct notifier_block *nb, unsigned long event, void *cmd)
 {
 	if (strstr((char *)cmd, "G3D")) {
@@ -167,6 +164,7 @@ static int gpu_noc_notifier(struct notifier_block *nb, unsigned long event, void
 	}
 	return 0;
 }
+#endif
 
 static int gpu_power_on(struct kbase_device *kbdev)
 {
@@ -228,9 +226,11 @@ static struct notifier_block gpu_pm_nb = {
 	.notifier_call = gpu_pm_notifier
 };
 
+#ifdef CONFIG_EXYNOS_BUSMONITOR
 static struct notifier_block gpu_noc_nb = {
 		.notifier_call = gpu_noc_notifier
 };
+#endif
 
 static int gpu_device_runtime_init(struct kbase_device *kbdev)
 {
