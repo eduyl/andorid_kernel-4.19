@@ -387,3 +387,53 @@ struct samsung_clk_provider * __init samsung_cmu_register_one(
 
 	return ctx;
 }
+#if defined(CONFIG_SOC_EXYNOS5433)
+struct dummy_gate_clk {
+	unsigned long	offset;
+	u8		bit_idx;
+	struct clk	*clk;
+};
+
+static struct dummy_gate_clk **gate_clk_list;
+static unsigned int gate_clk_nr = 0;
+
+int samsung_add_clk_gate_list(struct clk *clk, unsigned long offset, u8 bit_idx, const char *name)
+{
+	struct dummy_gate_clk *tmp_clk;
+
+	if (!clk || !offset)
+		return -EINVAL;
+
+	tmp_clk = kzalloc(sizeof(struct dummy_gate_clk), GFP_KERNEL);
+	if (!tmp_clk) {
+		pr_err("%s: fail to alloc for gate_clk\n", __func__);
+		return -ENOMEM;
+	}
+
+	tmp_clk->offset = offset;
+	tmp_clk->bit_idx = bit_idx;
+	tmp_clk->clk = clk;
+
+	gate_clk_list[gate_clk_nr] = tmp_clk;
+
+	gate_clk_nr++;
+
+	return 0;
+}
+
+struct clk *samsung_clk_get_by_reg(unsigned long offset, u8 bit_idx)
+{
+	unsigned int i;
+
+	for(i = 0; i < gate_clk_nr; i++) {
+		if (gate_clk_list[i]->offset == offset) {
+			if (gate_clk_list[i]->bit_idx == bit_idx)
+				return gate_clk_list[i]->clk;
+		}
+	}
+
+	pr_err("%s: Fail to get clk by register offset\n", __func__);
+
+	return 0;
+}
+#endif
