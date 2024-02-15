@@ -99,7 +99,7 @@ static void exynos_show_wakeup_reason_eint(void)
 			gpio = exynos_eint_to_pin_num(i + bit);
 			irq = gpio_to_irq(gpio);
 
-			log_wakeup_reason(irq);
+			log_irq_wakeup_reason(irq);
 			update_wakeup_reason_stats(irq, i + bit);
 			found = 1;
 		}
@@ -169,7 +169,7 @@ static int exynos_cpu_suspend(unsigned long arg)
 #endif
 	flush_cache_all();
 
-	if (call_firmware_op(do_idle))
+	if (call_firmware_op(do_idle,0))
 		cpu_do_idle();
 	pr_info("sleep resumed to originator?");
 

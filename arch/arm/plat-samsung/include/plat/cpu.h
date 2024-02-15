@@ -288,4 +288,6 @@ extern struct bus_type s3c2442_subsys;
 extern struct bus_type s3c2443_subsys;
 extern struct bus_type s3c6410_subsys;
 
+extern struct bus_type exynos_subsys;
+
 #endif

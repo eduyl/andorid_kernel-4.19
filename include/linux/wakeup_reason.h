@@ -34,4 +34,8 @@ static inline void log_abnormal_wakeup_reason(const char *fmt, ...) { }
 static inline void clear_wakeup_reasons(void) { }
 #endif
 
+#ifdef CONFIG_ARCH_EXYNOS
+void update_wakeup_reason_stats(int irq, int eint);
+#endif
+
 #endif /* _LINUX_WAKEUP_REASON_H */
