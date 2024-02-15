@@ -240,8 +240,8 @@ static void cpuidle_profile_main_finish(void)
 	cpuidle_profile_show_result();
 
 	/* Clear starting and finish time */
-	profile_start_time.tv64 = 0;
-	profile_finish_time.tv64 = 0;
+	profile_start_time = 0;
+	profile_finish_time = 0;
 }
 
 /*********************************************************************

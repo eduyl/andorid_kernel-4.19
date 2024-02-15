@@ -1519,10 +1519,10 @@ static int __init exynos_init_cpuidle(void)
 #endif
 
 		/* Eagle will not change idle time correlation factor */
-		if (cpu_id & 0x4)
-			device->skip_idle_correlation = true;
-		else
-			device->skip_idle_correlation = false;
+		// if (cpu_id & 0x4)
+		// 	device->skip_idle_correlation = true;
+		// else
+		// 	device->skip_idle_correlation = false;
 
 		if (cpuidle_register_device(device)) {
 			printk(KERN_ERR "CPUidle register device failed\n,");

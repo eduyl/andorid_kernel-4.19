@@ -434,7 +434,7 @@ static struct cpuidle_state exynos5_cpuidle_set[] __initdata = {
 		.enter			= exynos_enter_idle,
 		.exit_latency		= 1,
 		.target_residency	= 500,
-		.flags			= CPUIDLE_FLAG_TIME_VALID,
+		.flags			= CPUIDLE_FLAG_POLLING,
 		.name			= "C1",
 		.desc			= "ARM clock gating(WFI)",
 	},
@@ -443,7 +443,7 @@ static struct cpuidle_state exynos5_cpuidle_set[] __initdata = {
 		.enter                  = exynos_enter_c2,
 		.exit_latency           = 20,
 		.target_residency       = 750,
-		.flags                  = CPUIDLE_FLAG_TIME_VALID,
+		.flags                  = CPUIDLE_FLAG_POLLING,
 		.name                   = "C2",
 		.desc                   = "Little power down",
 	},
@@ -1197,10 +1197,10 @@ static int __init exynos_init_cpuidle(void)
 #endif
 
 		/* Eagle will not change idle time correlation factor */
-		if (cpu_id & 0x4)
-			device->skip_idle_correlation = true;
-		else
-			device->skip_idle_correlation = false;
+		// if (cpu_id & 0x4)
+		// 	device->skip_idle_correlation = true;
+		// else
+		// 	device->skip_idle_correlation = false;
 
 		if (cpuidle_register_device(device)) {
 			printk(KERN_ERR "CPUidle register device failed\n,");

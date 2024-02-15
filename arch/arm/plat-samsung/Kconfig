@@ -44,7 +44,6 @@ config S3C_GPIO_SPACE
 
 config S3C_LOWLEVEL_UART_PORT
 	int "S3C UART to use for low-level messages"
-	depends on ARCH_S3C64XX
 	default 0
 	help
 	  Choice of which UART port to use for the low-level messages,
