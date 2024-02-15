@@ -24,3 +24,7 @@ obj-$(CONFIG_USB_MXS_PHY)		+= phy-mxs-usb.o
 obj-$(CONFIG_USB_ULPI)			+= phy-ulpi.o
 obj-$(CONFIG_USB_ULPI_VIEWPORT)		+= phy-ulpi-viewport.o
 obj-$(CONFIG_KEYSTONE_USB_PHY)		+= phy-keystone.o
+obj-$(CONFIG_SAMSUNG_USBPHY)		+= phy-samsung-usb.o
+obj-$(CONFIG_SAMSUNG_USB2PHY)		+= phy-samsung-usb2.o
+obj-$(CONFIG_SAMSUNG_USB2PHY_DUMMY)	+= phy-samsung-usb2-dummy.o
+obj-$(CONFIG_SAMSUNG_USB3PHY)		+= phy-samsung-usb3.o
