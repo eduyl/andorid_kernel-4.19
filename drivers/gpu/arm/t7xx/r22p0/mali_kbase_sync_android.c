@@ -1,11 +1,12 @@
+// SPDX-License-Identifier: GPL-2.0
 /*
  *
- * (C) COPYRIGHT 2012-2017 ARM Limited. All rights reserved.
+ * (C) COPYRIGHT 2012-2017, 2022 ARM Limited. All rights reserved.
  *
  * This program is free software and is provided to you under the terms of the
  * GNU General Public License version 2 as published by the Free Software
  * Foundation, and any use by you of this program is subject to the terms
- * of such GNU licence.
+ * of such GNU license.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -15,8 +16,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, you can access it online at
  * http://www.gnu.org/licenses/gpl-2.0.html.
- *
- * SPDX-License-Identifier: GPL-2.0
  *
  */
 
@@ -34,8 +33,7 @@
 #include <linux/module.h>
 #include <linux/anon_inodes.h>
 #include <linux/version.h>
-#include "../../../../android/sync.h"
-#include "../../../../dma-buf/sync_debug.h"
+#include "sync.h"
 #include <mali_kbase.h>
 #include <mali_kbase_sync.h>
 
@@ -75,7 +73,7 @@ static struct sync_pt *timeline_dup(struct sync_pt *pt)
 {
 	struct mali_sync_pt *mpt = to_mali_sync_pt(pt);
 	struct mali_sync_pt *new_mpt;
-	struct sync_pt *new_pt = sync_pt_create(dma_fence_parent(pt->fence),
+	struct sync_pt *new_pt = sync_pt_create(sync_pt_parent(pt),
 						sizeof(struct mali_sync_pt));
 
 	if (!new_pt)
@@ -263,7 +261,9 @@ int kbase_sync_fence_out_create(struct kbase_jd_atom *katom, int tl_fd)
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 7, 0)
 	fd = get_unused_fd_flags(O_RDWR | O_CLOEXEC);
 	if (fd < 0) {
+		sync_pt_free(pt);
 		sync_fence_put(fence);
+		katom->fence = NULL;
 		goto out;
 	}
 #else
@@ -284,16 +284,11 @@ int kbase_sync_fence_out_create(struct kbase_jd_atom *katom, int tl_fd)
 	spin_unlock(&files->file_lock);
 #endif  /* LINUX_VERSION_CODE >= KERNEL_VERSION(3, 7, 0) */
 
+	/* Place the successfully created fence in katom */
+	katom->fence = fence;
+
 	/* bind fence to the new fd */
 	sync_fence_install(fence, fd);
-
-	katom->fence = sync_fence_fdget(fd);
-	if (katom->fence == NULL) {
-		/* The only way the fence can be NULL is if userspace closed it
-		 * for us, so we don't need to clear it up */
-		fd = -EINVAL;
-		goto out;
-	}
 
 out:
 	fput(tl_file);
@@ -380,8 +375,7 @@ kbase_sync_fence_out_trigger(struct kbase_jd_atom *katom, int result)
 #if LINUX_VERSION_CODE < KERNEL_VERSION(3, 17, 0)
 	if (!list_is_singular(&katom->fence->pt_list_head)) {
 #else
-	if (!list_is_singular(katom->fence->sync_fence_list)) {
-	//if (katom->fence->num_fences != 1) {
+	if (katom->fence->num_fences != 1) {
 #endif
 		/* Not exactly one item in the list - so it didn't (directly)
 		 * come from us */
@@ -415,7 +409,11 @@ static inline int kbase_fence_get_status(struct sync_fence *fence)
 	if (!fence)
 		return -ENOENT;
 
-	return fence->status; //atomic_read(&fence->status);
+#if LINUX_VERSION_CODE < KERNEL_VERSION(3, 17, 0)
+	return fence->status;
+#else
+	return atomic_read(&fence->status);
+#endif
 }
 
 static void kbase_fence_wait_callback(struct sync_fence *fence,
