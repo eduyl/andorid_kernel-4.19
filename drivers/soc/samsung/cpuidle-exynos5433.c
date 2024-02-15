@@ -451,7 +451,7 @@ static struct cpuidle_state exynos5_cpuidle_set[] __initdata = {
 		.enter                  = exynos_enter_c2,
 		.exit_latency           = 30,
 		.target_residency       = 2000,
-		.flags                  = CPUIDLE_FLAG_TIME_VALID,
+		.flags                  = CPUIDLE_FLAG_POLLING,
 		.name                   = "C2.1",
 		.desc                   = "big power down",
 	},
@@ -460,7 +460,7 @@ static struct cpuidle_state exynos5_cpuidle_set[] __initdata = {
 		.enter                  = exynos_enter_c2,
 		.exit_latency           = 300,
 		.target_residency       = CLUSTER_OFF_TARGET_RESIDENCY,
-		.flags                  = CPUIDLE_FLAG_TIME_VALID,
+		.flags                  = CPUIDLE_FLAG_POLLING,
 		.name                   = "C2-1",
 		.desc                   = "Cluster power down",
 	},
@@ -472,7 +472,7 @@ static struct cpuidle_state exynos5_cpuidle_set[] __initdata = {
 		.enter                  = exynos_enter_lowpower,
 		.exit_latency           = 300,
 		.target_residency       = 5000,
-		.flags                  = CPUIDLE_FLAG_TIME_VALID,
+		.flags                  = CPUIDLE_FLAG_POLLING,
 		.name                   = "C3",
 		.desc                   = "System power down",
 	},
@@ -1191,7 +1191,7 @@ static int __init exynos_init_cpuidle(void)
 		device = &per_cpu(exynos_cpuidle_device, cpu_id);
 		device->cpu = cpu_id;
 
-		device->state_count = exynos_idle_driver.state_count;
+		// device->state_count = exynos_idle_driver.state_count;
 #if defined (CONFIG_EXYNOS_CLUSTER_POWER_DOWN)
 		cpumask_clear(&cpu_c2_state);
 #endif

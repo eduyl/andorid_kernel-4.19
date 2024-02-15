@@ -3,7 +3,7 @@
 # Copyright (c) 2010-2011 Samsung Electronics Co., Ltd.
 #		http://www.samsung.com/
 
-ccflags-$(CONFIG_ARCH_MULTIPLATFORM) += -I$(srctree)/$(src)/include -I$(srctree)/arch/arm/plat-samsung/include
+ccflags-$(CONFIG_ARCH_MULTIPLATFORM) += -I$(srctree)/$(src)/include -I$(srctree)/arch/arm/plat-samsung/include -I$(srctree)/drivers/soc/samsung/include
 
 # Core
 
@@ -20,3 +20,9 @@ AFLAGS_sleep.o			:=-Wa,-march=armv7-a$(plus_sec)
 
 obj-$(CONFIG_EXYNOS5420_MCPM)	+= mcpm-exynos.o
 CFLAGS_mcpm-exynos.o		+= -march=armv7-a
+
+obj-$(CONFIG_CAL_SYS_PWRDOWN)	+= pmu_cal_sys.o
+ifeq ($(CONFIG_SOC_EXYNOS5433),y)
+obj-$(CONFIG_CAL_SYS_PWRDOWN)	+= pmu_cal_sys_exynos5433.o
+endif
+

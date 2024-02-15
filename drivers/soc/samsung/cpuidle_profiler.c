@@ -69,7 +69,7 @@ static void __cpuidle_profile_finish(struct cpuidle_profile_info *info,
 {
 	s64 diff;
 
-	if (info->entry_time.tv64 <= 0)
+	if (info->entry_time <= 0)
 		return;
 
 	diff = ktime_to_us(ktime_sub(cur_time, info->entry_time));
@@ -171,7 +171,7 @@ static void cpuidle_profile_clear_single(struct cpuidle_profile_info *info)
 	}
 
 	info->entered = 0;
-	info->entry_time.tv64 = 0;
+	info->entry_time = 0;
 }
 
 static void cpuidle_profile_single_start(void *p)

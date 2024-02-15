@@ -142,6 +142,8 @@ config SOC_EXYNOS5433
 	help
 	  Enable EXYNOS5433 SoC support
 
+config CAL_SYS_PWRDOWN
+	bool
 
 choice
 	prompt "Revision Type"
