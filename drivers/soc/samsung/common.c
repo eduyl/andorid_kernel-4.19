@@ -1219,25 +1219,25 @@ static unsigned int max_combiner_nr(void)
 }
 
 
-void __init exynos4_init_irq(void)
-{
-	unsigned int gic_bank_offset;
+// void __init exynos4_init_irq(void)
+// {
+// 	unsigned int gic_bank_offset;
 
-	gic_bank_offset = soc_is_exynos4412() ? 0x4000 : 0x8000;
+// 	gic_bank_offset = soc_is_exynos4412() ? 0x4000 : 0x8000;
 
-	if (!of_have_populated_dt())
-		gic_init_bases(0, IRQ_PPI(0), S5P_VA_GIC_DIST, S5P_VA_GIC_CPU, gic_bank_offset, NULL);
-#ifdef CONFIG_OF
-	else
-		irqchip_init();
-#endif
+// 	if (!of_have_populated_dt())
+// 		gic_init_bases(0, IRQ_PPI(0), S5P_VA_GIC_DIST, S5P_VA_GIC_CPU, gic_bank_offset, NULL);
+// #ifdef CONFIG_OF
+// 	else
+// 		irqchip_init();
+// #endif
 
-	if (!of_have_populated_dt())
-		combiner_init(S5P_VA_COMBINER_BASE, NULL,
-			      max_combiner_nr(), COMBINER_IRQ(0, 0));
+// 	if (!of_have_populated_dt())
+// 		combiner_init(S5P_VA_COMBINER_BASE, NULL,
+// 			      max_combiner_nr(), COMBINER_IRQ(0, 0));
 
-	gic_arch_extn.irq_set_wake = s3c_irq_wake;
-}
+// 	gic_arch_extn.irq_set_wake = s3c_irq_wake;
+// }
 
 void __init exynos5_init_irq(void)
 {
