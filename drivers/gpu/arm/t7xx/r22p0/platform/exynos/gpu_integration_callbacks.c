@@ -840,11 +840,11 @@ static void kbase_fence_timeout(unsigned long data)
 	{
 		struct sync_pt *pt;
 		struct sync_timeline *timeline;
-#if LINUX_VERSION_CODE < KERNEL_VERSION(3, 17, 0)
+// #if LINUX_VERSION_CODE < KERNEL_VERSION(3, 17, 0)
 		pt = list_first_entry(&katom->fence->pt_list_head, struct sync_pt, pt_list);
-#else
-		pt = container_of(katom->fence->cbs[0].sync_pt, struct sync_pt, base);
-#endif
+// #else
+// 		pt = container_of(katom->fence->cbs[0].sync_pt, struct sync_pt, base);
+// #endif
 		if (pt == NULL) {
 			spin_unlock_irqrestore(&katom->fence_lock, flags);
 			return;

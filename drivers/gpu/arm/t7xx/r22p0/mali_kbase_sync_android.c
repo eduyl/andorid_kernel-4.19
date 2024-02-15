@@ -49,14 +49,14 @@ struct mali_sync_pt {
 	int result;
 };
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(3, 17, 0)
+// #if LINUX_VERSION_CODE < KERNEL_VERSION(3, 17, 0)
 /* For backwards compatibility with kernels before 3.17. After 3.17
  * sync_pt_parent is included in the kernel. */
 static inline struct sync_timeline *sync_pt_parent(struct sync_pt *pt)
 {
 	return pt->parent;
 }
-#endif
+// #endif
 
 static struct mali_sync_timeline *to_mali_sync_timeline(
 						struct sync_timeline *timeline)
@@ -372,22 +372,22 @@ kbase_sync_fence_out_trigger(struct kbase_jd_atom *katom, int result)
 	if (!katom->fence)
 		return BASE_JD_EVENT_JOB_CANCELLED;
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(3, 17, 0)
+// #if LINUX_VERSION_CODE < KERNEL_VERSION(3, 17, 0)
 	if (!list_is_singular(&katom->fence->pt_list_head)) {
-#else
-	if (katom->fence->num_fences != 1) {
-#endif
+// #else
+// 	if (katom->fence->num_fences != 1) {
+// #endif
 		/* Not exactly one item in the list - so it didn't (directly)
 		 * come from us */
 		return BASE_JD_EVENT_JOB_CANCELLED;
 	}
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(3, 17, 0)
+// #if LINUX_VERSION_CODE < KERNEL_VERSION(3, 17, 0)
 	pt = list_first_entry(&katom->fence->pt_list_head,
 			      struct sync_pt, pt_list);
-#else
-	pt = container_of(katom->fence->cbs[0].sync_pt, struct sync_pt, base);
-#endif
+// #else
+// 	pt = container_of(katom->fence->cbs[0].sync_pt, struct sync_pt, base);
+// #endif
 	timeline = sync_pt_parent(pt);
 
 	if (!kbase_sync_timeline_is_ours(timeline)) {
@@ -409,11 +409,11 @@ static inline int kbase_fence_get_status(struct sync_fence *fence)
 	if (!fence)
 		return -ENOENT;
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(3, 17, 0)
+// #if LINUX_VERSION_CODE < KERNEL_VERSION(3, 17, 0)
 	return fence->status;
-#else
-	return atomic_read(&fence->status);
-#endif
+// #else
+// 	return atomic_read(&fence->status);
+// #endif
 }
 
 static void kbase_fence_wait_callback(struct sync_fence *fence,
