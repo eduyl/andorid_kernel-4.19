@@ -264,117 +264,117 @@ static void samsung_usb3phy_crport_ctrl(struct samsung_usbphy *sphy,
 			EXYNOS5_DRD_PHYREG0_CR_WRITE);
 }
 
-static void samsung_usb3phy_tune(struct usb_phy *phy)
-{
-	struct samsung_usbphy *sphy;
-	u32 refclk;
-	u32 temp;
+// static void samsung_usb3phy_tune(struct usb_phy *phy)
+// {
+// 	struct samsung_usbphy *sphy;
+// 	u32 refclk;
+// 	u32 temp;
 
-	sphy = phy_to_sphy(phy);
-	refclk = sphy->ref_clk_freq;
+// 	sphy = phy_to_sphy(phy);
+// 	refclk = sphy->ref_clk_freq;
 
-	if (sphy->drv_data->cpu_type == TYPE_EXYNOS5420) {
-		u32 phyparam0 = readl(sphy->regs + EXYNOS5_DRD_PHYPARAM0);
+// 	if (sphy->drv_data->cpu_type == TYPE_EXYNOS5420) {
+// 		u32 phyparam0 = readl(sphy->regs + EXYNOS5_DRD_PHYPARAM0);
 
-		if (phy->state >= OTG_STATE_A_IDLE) {	/* for host mode */
-			/* txpreempamptune[16:15] 2'b00 : default value */
-			phyparam0 &= ~PHYPARAM0_TXPREEMPAMPTUNE_MASK;
-			phyparam0 |= PHYPARAM0_TXPREEMPAMPTUNE(0x0);
-			/* txvreftune[25:22] 4'b0011 : defalut value */
-			phyparam0 &= ~PHYPARAM0_TXVREFTUNE_MASK;
-			phyparam0 |= PHYPARAM0_TXVREFTUNE(0x3);
-		} else {				/* for device mode */
-			/* txpreempamptune[16:15] 2'b01 :1X  */
-			phyparam0 &= ~PHYPARAM0_TXPREEMPAMPTUNE_MASK;
-			phyparam0 |= PHYPARAM0_TXPREEMPAMPTUNE(0x1);
-			/* txvreftune[25:22] 4'b1011: +10% */
-			phyparam0 &= ~PHYPARAM0_TXVREFTUNE_MASK;
-			phyparam0 |= PHYPARAM0_TXVREFTUNE(0xb);
-		}
-		writel(phyparam0, sphy->regs + EXYNOS5_DRD_PHYPARAM0);
-		dev_info(sphy->dev, "set phyparam0 = 0x%x\n", phyparam0);
-	} else if (sphy->drv_data->cpu_type == TYPE_EXYNOS5430) {
-		u32 phyparam0 = readl(sphy->regs + EXYNOS5_DRD_PHYPARAM0);
+// 		if (phy->otg->state >= OTG_STATE_A_IDLE) {	/* for host mode */
+// 			/* txpreempamptune[16:15] 2'b00 : default value */
+// 			phyparam0 &= ~PHYPARAM0_TXPREEMPAMPTUNE_MASK;
+// 			phyparam0 |= PHYPARAM0_TXPREEMPAMPTUNE(0x0);
+// 			/* txvreftune[25:22] 4'b0011 : defalut value */
+// 			phyparam0 &= ~PHYPARAM0_TXVREFTUNE_MASK;
+// 			phyparam0 |= PHYPARAM0_TXVREFTUNE(0x3);
+// 		} else {				/* for device mode */
+// 			/* txpreempamptune[16:15] 2'b01 :1X  */
+// 			phyparam0 &= ~PHYPARAM0_TXPREEMPAMPTUNE_MASK;
+// 			phyparam0 |= PHYPARAM0_TXPREEMPAMPTUNE(0x1);
+// 			/* txvreftune[25:22] 4'b1011: +10% */
+// 			phyparam0 &= ~PHYPARAM0_TXVREFTUNE_MASK;
+// 			phyparam0 |= PHYPARAM0_TXVREFTUNE(0xb);
+// 		}
+// 		writel(phyparam0, sphy->regs + EXYNOS5_DRD_PHYPARAM0);
+// 		dev_info(sphy->dev, "set phyparam0 = 0x%x\n", phyparam0);
+// 	} else if (sphy->drv_data->cpu_type == TYPE_EXYNOS5430) {
+// 		u32 phyparam0 = readl(sphy->regs + EXYNOS5_DRD_PHYPARAM0);
 
-		if (phy->state >= OTG_STATE_A_IDLE) {	/* for host mode */
-			/* compdistune[2:0] 3'b111 : +4.5% */
-			phyparam0 &= ~PHYPARAM0_COMPDISTUNE_MASK;
-			phyparam0 |= PHYPARAM0_COMPDISTUNE(0x7);
-			/* sqrxtune[8:6] 3'b011 : default value */
-			phyparam0 &= ~PHYPARAM0_SQRXTUNE_MASK;
-			phyparam0 |= PHYPARAM0_SQRXTUNE(0x3);
-			/* txpreempamptune[16:15] 2'b00 : default value */
-			phyparam0 &= ~PHYPARAM0_TXPREEMPAMPTUNE_MASK;
-			phyparam0 |= PHYPARAM0_TXPREEMPAMPTUNE(0x0);
-			/* txvreftune[25:22] 4'b0001 : -2.5% */
-			phyparam0 &= ~PHYPARAM0_TXVREFTUNE_MASK;
-			phyparam0 |= PHYPARAM0_TXVREFTUNE(0x1);
-		} else {				/* for device mode */
-			/* compdistune[2:0] 3'b100 : default value */
-			phyparam0 &= ~PHYPARAM0_COMPDISTUNE_MASK;
-			phyparam0 |= PHYPARAM0_COMPDISTUNE(0x4);
-			/* sqrxtune[8:6] 3'b111 : -20% */
-			phyparam0 &= ~PHYPARAM0_SQRXTUNE_MASK;
-			phyparam0 |= PHYPARAM0_SQRXTUNE(0x7);
-			/* txpreempamptune[16:15] 2'b11 : 3X  */
-			phyparam0 &= ~PHYPARAM0_TXPREEMPAMPTUNE_MASK;
-			phyparam0 |= PHYPARAM0_TXPREEMPAMPTUNE(0x3);
-			/* txvreftune[25:22] 4'b1111 : i5% */
-			phyparam0 &= ~PHYPARAM0_TXVREFTUNE_MASK;
-			phyparam0 |= PHYPARAM0_TXVREFTUNE(0xf);
-		}
-		writel(phyparam0, sphy->regs + EXYNOS5_DRD_PHYPARAM0);
-		dev_info(sphy->dev, "set phyparam0 = 0x%x\n", phyparam0);
-	} 
+// 		if (phy->otg->state >= OTG_STATE_A_IDLE) {	/* for host mode */
+// 			/* compdistune[2:0] 3'b111 : +4.5% */
+// 			phyparam0 &= ~PHYPARAM0_COMPDISTUNE_MASK;
+// 			phyparam0 |= PHYPARAM0_COMPDISTUNE(0x7);
+// 			/* sqrxtune[8:6] 3'b011 : default value */
+// 			phyparam0 &= ~PHYPARAM0_SQRXTUNE_MASK;
+// 			phyparam0 |= PHYPARAM0_SQRXTUNE(0x3);
+// 			/* txpreempamptune[16:15] 2'b00 : default value */
+// 			phyparam0 &= ~PHYPARAM0_TXPREEMPAMPTUNE_MASK;
+// 			phyparam0 |= PHYPARAM0_TXPREEMPAMPTUNE(0x0);
+// 			/* txvreftune[25:22] 4'b0001 : -2.5% */
+// 			phyparam0 &= ~PHYPARAM0_TXVREFTUNE_MASK;
+// 			phyparam0 |= PHYPARAM0_TXVREFTUNE(0x1);
+// 		} else {				/* for device mode */
+// 			/* compdistune[2:0] 3'b100 : default value */
+// 			phyparam0 &= ~PHYPARAM0_COMPDISTUNE_MASK;
+// 			phyparam0 |= PHYPARAM0_COMPDISTUNE(0x4);
+// 			/* sqrxtune[8:6] 3'b111 : -20% */
+// 			phyparam0 &= ~PHYPARAM0_SQRXTUNE_MASK;
+// 			phyparam0 |= PHYPARAM0_SQRXTUNE(0x7);
+// 			/* txpreempamptune[16:15] 2'b11 : 3X  */
+// 			phyparam0 &= ~PHYPARAM0_TXPREEMPAMPTUNE_MASK;
+// 			phyparam0 |= PHYPARAM0_TXPREEMPAMPTUNE(0x3);
+// 			/* txvreftune[25:22] 4'b1111 : i5% */
+// 			phyparam0 &= ~PHYPARAM0_TXVREFTUNE_MASK;
+// 			phyparam0 |= PHYPARAM0_TXVREFTUNE(0xf);
+// 		}
+// 		writel(phyparam0, sphy->regs + EXYNOS5_DRD_PHYPARAM0);
+// 		dev_info(sphy->dev, "set phyparam0 = 0x%x\n", phyparam0);
+// 	} 
 
-	if (!sphy->drv_data->need_crport_tuning)
-		return;
+// 	if (!sphy->drv_data->need_crport_tuning)
+// 		return;
 
-	if (sphy->drv_data->cpu_type == TYPE_EXYNOS5430) {
-		/* HS Impedance Setting */
-		temp = samsung_usb3phy_crport_read(phy,
-			EXYNOS5_DRD_PHYHS_TX_PARA_RES_CIRCUIT);
-		temp |= TX_PARA_RES_CIRCUIT_EN_OVRD;
-		temp &= ~TX_PARA_RES_CIRCUIT_MASK;
-		/* choose one of them : 0x0, 0x4, 0x8, 0xb, 0xf */
-		temp |= TX_PARA_RES_CIRCUIT(0x8);
-		samsung_usb3phy_crport_ctrl(sphy,
-			EXYNOS5_DRD_PHYHS_TX_PARA_RES_CIRCUIT, temp);
+// 	if (sphy->drv_data->cpu_type == TYPE_EXYNOS5430) {
+// 		/* HS Impedance Setting */
+// 		temp = samsung_usb3phy_crport_read(phy,
+// 			EXYNOS5_DRD_PHYHS_TX_PARA_RES_CIRCUIT);
+// 		temp |= TX_PARA_RES_CIRCUIT_EN_OVRD;
+// 		temp &= ~TX_PARA_RES_CIRCUIT_MASK;
+// 		/* choose one of them : 0x0, 0x4, 0x8, 0xb, 0xf */
+// 		temp |= TX_PARA_RES_CIRCUIT(0x8);
+// 		samsung_usb3phy_crport_ctrl(sphy,
+// 			EXYNOS5_DRD_PHYHS_TX_PARA_RES_CIRCUIT, temp);
 
-		/* Disable Incremantal Tune */
-		temp = samsung_usb3phy_crport_read(phy,
-			EXYNOS5_DRD_PHYHS_RESIST_REQ_EN_OVRD);
-		temp |= DIS_INC_TUNE(0x1);
-		samsung_usb3phy_crport_ctrl(sphy,
-			EXYNOS5_DRD_PHYHS_RESIST_REQ_EN_OVRD, temp);
-	} else {
-		temp = LOSLEVEL_OVRD_IN_LOS_BIAS_5420 |
-			LOSLEVEL_OVRD_IN_EN |
-			LOSLEVEL_OVRD_IN_LOS_LEVEL_DEFAULT;
-		samsung_usb3phy_crport_ctrl(sphy,
-			EXYNOS5_DRD_PHYSS_LOSLEVEL_OVRD_IN, temp);
+// 		/* Disable Incremantal Tune */
+// 		temp = samsung_usb3phy_crport_read(phy,
+// 			EXYNOS5_DRD_PHYHS_RESIST_REQ_EN_OVRD);
+// 		temp |= DIS_INC_TUNE(0x1);
+// 		samsung_usb3phy_crport_ctrl(sphy,
+// 			EXYNOS5_DRD_PHYHS_RESIST_REQ_EN_OVRD, temp);
+// 	} else {
+// 		temp = LOSLEVEL_OVRD_IN_LOS_BIAS_5420 |
+// 			LOSLEVEL_OVRD_IN_EN |
+// 			LOSLEVEL_OVRD_IN_LOS_LEVEL_DEFAULT;
+// 		samsung_usb3phy_crport_ctrl(sphy,
+// 			EXYNOS5_DRD_PHYSS_LOSLEVEL_OVRD_IN, temp);
 
-		temp = TX_VBOOSTLEVEL_OVRD_IN_VBOOST_5420;
-		samsung_usb3phy_crport_ctrl(sphy,
-			EXYNOS5_DRD_PHYSS_TX_VBOOSTLEVEL_OVRD_IN, temp);
+// 		temp = TX_VBOOSTLEVEL_OVRD_IN_VBOOST_5420;
+// 		samsung_usb3phy_crport_ctrl(sphy,
+// 			EXYNOS5_DRD_PHYSS_TX_VBOOSTLEVEL_OVRD_IN, temp);
 
-		switch (refclk) {
-		case FSEL_CLKSEL_50M:
-			temp = RXDET_MEAS_TIME_50M;
-			break;
-		case FSEL_CLKSEL_20M:
-		case FSEL_CLKSEL_19200K:
-			temp = RXDET_MEAS_TIME_20M;
-			break;
-		case FSEL_CLKSEL_24M:
-		default:
-			temp = RXDET_MEAS_TIME_24M;
-			break;
-		}
-		samsung_usb3phy_crport_ctrl(sphy,
-			EXYNOS5_DRD_PHYSS_RXDET_MEAS_TIME, temp);
-	}
-}
+// 		switch (refclk) {
+// 		case FSEL_CLKSEL_50M:
+// 			temp = RXDET_MEAS_TIME_50M;
+// 			break;
+// 		case FSEL_CLKSEL_20M:
+// 		case FSEL_CLKSEL_19200K:
+// 			temp = RXDET_MEAS_TIME_20M;
+// 			break;
+// 		case FSEL_CLKSEL_24M:
+// 		default:
+// 			temp = RXDET_MEAS_TIME_24M;
+// 			break;
+// 		}
+// 		samsung_usb3phy_crport_ctrl(sphy,
+// 			EXYNOS5_DRD_PHYSS_RXDET_MEAS_TIME, temp);
+// 	}
+// }
 
 #ifdef CONFIG_USB_ANDROID_SAMSUNG_USBTUNE
 u32 usbtune;
@@ -649,8 +649,8 @@ static int samsung_usb3phy_probe(struct platform_device *pdev)
 	sphy->phy.type		= USB_PHY_TYPE_USB3;
 	sphy->phy.init		= samsung_usb3phy_init;
 	sphy->phy.shutdown	= samsung_usb3phy_shutdown;
-	sphy->phy.is_active	= samsung_usb3phy_is_active;
-	sphy->phy.tune		= samsung_usb3phy_tune;
+	// sphy->phy.is_active	= samsung_usb3phy_is_active;
+	// sphy->phy.tune		= samsung_usb3phy_tune;
 	sphy->phy.io_ops	= &samsung_usb3phy_io_ops;
 	sphy->drv_data		= samsung_usbphy_get_driver_data(pdev);
 	sphy->ref_clk_freq	= samsung_usbphy_get_refclk_freq(sphy);

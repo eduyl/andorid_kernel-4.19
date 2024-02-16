@@ -251,6 +251,7 @@ usb_phy_drive_dp_pulse(struct usb_phy *x, unsigned int pulse_width)
 
 /* for usb host and peripheral controller drivers */
 #if IS_ENABLED(CONFIG_USB_PHY)
+extern bool usb_phy_check_op(void);
 extern struct usb_phy *usb_get_phy(enum usb_phy_type type);
 extern struct usb_phy *devm_usb_get_phy(struct device *dev,
 	enum usb_phy_type type);
@@ -268,6 +269,10 @@ extern void usb_phy_get_charger_current(struct usb_phy *usb_phy,
 extern void usb_phy_set_charger_state(struct usb_phy *usb_phy,
 				      enum usb_charger_state state);
 #else
+static inline bool usb_phy_check_op(void)
+{
+	return false;
+}
 static inline struct usb_phy *usb_get_phy(enum usb_phy_type type)
 {
 	return ERR_PTR(-ENXIO);
