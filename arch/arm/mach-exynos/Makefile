@@ -20,9 +20,3 @@ AFLAGS_sleep.o			:=-Wa,-march=armv7-a$(plus_sec)
 
 obj-$(CONFIG_EXYNOS5420_MCPM)	+= mcpm-exynos.o
 CFLAGS_mcpm-exynos.o		+= -march=armv7-a
-
-obj-$(CONFIG_CAL_SYS_PWRDOWN)	+= pmu_cal_sys.o
-ifeq ($(CONFIG_SOC_EXYNOS5433),y)
-obj-$(CONFIG_CAL_SYS_PWRDOWN)	+= pmu_cal_sys_exynos5433.o
-endif
-

@@ -459,7 +459,7 @@ struct kbase_jd_atom {
 	/* Copy of data read from the user space buffer that jc points to */
 	void *softjob_data;
 	enum kbase_atom_coreref_state coreref_state;
-// #if defined(CONFIG_SYNC)
+#if defined(CONFIG_SYNC)
 	/* Stores either an input or output fence, depending on soft-job type */
 	struct sync_fence *fence;
 	struct sync_fence_waiter sync_waiter;
@@ -467,7 +467,7 @@ struct kbase_jd_atom {
 	spinlock_t fence_lock;
 	struct mutex fence_mt;
 	struct timer_list fence_timer;
-// #endif				/* CONFIG_SYNC */
+#endif				/* CONFIG_SYNC */
 #if defined(CONFIG_MALI_DMA_FENCE) || defined(CONFIG_SYNC_FILE)
 	struct {
 		/* Use the functions/API defined in mali_kbase_fence.h to

@@ -1624,7 +1624,7 @@ int kbase_jd_init(struct kbase_context *kctx)
 		INIT_LIST_HEAD(&kctx->jctx.atoms[i].dma_fence.callbacks);
 #endif
 		/* MALI_SEC_INTEGRATION */
-		spin_lock_init(&kctx->jctx.atoms[i].fence_lock);
+		// spin_lock_init(&kctx->jctx.atoms[i].fence_lock);
 	}
 
 	mutex_init(&kctx->jctx.lock);

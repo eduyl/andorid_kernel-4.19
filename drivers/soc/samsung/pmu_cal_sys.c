@@ -12,5 +12,5 @@
 #include <linux/types.h>
 #include <mach/pmu.h>
 
-void (*exynos_sys_powerdown_conf)(enum sys_powerdown mode);
+// void (*exynos_sys_powerdown_conf)(enum sys_powerdown mode);
 void (*exynos_central_sequencer_ctrl)(bool enable);
