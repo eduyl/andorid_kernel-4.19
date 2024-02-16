@@ -413,4 +413,11 @@ config BT_HCIRSI
 	  Say Y here to compile support for HCI over Redpine into the
 	  kernel or say M to compile as a module.
 
+config BT_BCM4358
+	bool "Enable BCM4358 driver"
+	default n
+	help
+	  Adds BCM4358 RFKILL driver for Broadcom BCM4358 chipset for exynos54xx.
+	  default is n.
+
 endmenu

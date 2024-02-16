@@ -139,6 +139,9 @@ config SOC_EXYNOS5433
 	select EXYNOS_PWM_RESET_DURING_DSTOP if CPU_IDLE
 	select CAL_SYS_PWRDOWN
 	select SECCOMP
+	select PLAT_SAMSUNG
+	select GPIO_SAMSUNG
+
 	help
 	  Enable EXYNOS5433 SoC support
 

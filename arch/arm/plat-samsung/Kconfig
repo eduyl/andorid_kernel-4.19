@@ -13,7 +13,7 @@ config PLAT_SAMSUNG
 
 config SAMSUNG_PM
 	bool
-	depends on PM && (PLAT_S3C24XX || ARCH_S3C64XX)
+	depends on PM
 	default y
 	help
 	  Base platform power management code for samsung code
@@ -254,13 +254,13 @@ config SAMSUNG_PM_DEBUG
 	  for more information.
 
 config S3C_PM_DEBUG_LED_SMDK
-       bool "SMDK LED suspend/resume debugging"
-       depends on PM && (MACH_SMDK6410)
-       help
-         Say Y here to enable the use of the SMDK LEDs on the baseboard
-	 for debugging of the state of the suspend and resume process.
+	  bool "SMDK LED suspend/resume debugging"
+	  depends on PM && (MACH_SMDK6410)
+	  help
+	   Say Y here to enable the use of the SMDK LEDs on the baseboard
+	   for debugging of the state of the suspend and resume process.
 
-	 Note, this currently only works for S3C64XX based SMDK boards.
+	   Note, this currently only works for S3C64XX based SMDK boards.
 
 config SAMSUNG_PM_CHECK
 	bool "S3C2410 PM Suspend Memory CRC"
@@ -310,6 +310,12 @@ config DEBUG_S3C_UART
 	default "1" if DEBUG_S3C_UART1
 	default "2" if DEBUG_S3C_UART2
 	default "3" if DEBUG_S3C_UART3
+
+config S5P_SLEEP
+	bool
+	help
+	  Internal config node to apply common S5P sleep management code.
+	  Can be selected by S5P and newer SoCs with similar sleep procedure.
 
 endmenu
 endif

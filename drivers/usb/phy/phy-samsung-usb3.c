@@ -26,7 +26,7 @@
 #include <linux/of.h>
 #include <linux/usb/samsung_usb_phy.h>
 #include <linux/platform_data/samsung-usbphy.h>
-
+#include <linux/usb/phy.h>
 #include "phy-samsung-usb.h"
 
 /*

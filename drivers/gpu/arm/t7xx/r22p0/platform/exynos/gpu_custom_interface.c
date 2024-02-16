@@ -20,7 +20,7 @@
 #include <linux/fb.h>
 
 #if defined(CONFIG_EXYNOS_THERMAL) && defined(CONFIG_MALI_DEBUG_KERNEL_SYSFS)
-#include <soc/samsung/tmu.h>
+#include <mach/tmu.h>
 #include <plat/cpu.h>
 #include "cal_tmu.h"
 #endif

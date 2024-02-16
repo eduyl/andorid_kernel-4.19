@@ -1,6 +1,8 @@
 # SPDX-License-Identifier: GPL-2.0
 
 ccflags-y := -I$(srctree)/$(src)/include -I$(srctree)/arch/arm/plat-samsung/include
+ccflags-y += -I$(srctree)/drivers/soc/samsung/include
+
 obj-y	+= common.o
 obj-$(CONFIG_EXYNOS_PMU)	+= exynos-pmu.o
 

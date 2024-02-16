@@ -31,7 +31,7 @@
 #include "gpu_control.h"
 
 #ifdef CONFIG_EXYNOS_THERMAL
-#include <soc/samsung/tmu.h>
+#include <mach/tmu.h>
 #endif /* CONFIG_EXYNOS_THERMAL */
 
 #ifdef CONFIG_EXYNOS_NOC_DEBUGGING

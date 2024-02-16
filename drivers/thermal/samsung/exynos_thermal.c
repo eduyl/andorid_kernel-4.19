@@ -42,7 +42,7 @@
 #include <linux/suspend.h>
 #include <linux/pm_qos.h>
 #include <plat/cpu.h>
-#include <soc/samsung/tmu.h>
+#include <mach/tmu.h>
 #include <mach/cpufreq.h>
 #include <mach/asv-exynos.h>
 #include <mach/exynos-pm.h>

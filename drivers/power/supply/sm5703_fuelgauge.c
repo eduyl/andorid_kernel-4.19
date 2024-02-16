@@ -1691,7 +1691,7 @@ static int sm5703_fuelgauge_probe(struct i2c_client *client,
 	if (fuelgauge->pdata->fuelgauge_name == NULL)
 		fuelgauge->pdata->fuelgauge_name = "sm5703-fuelgauge";
 
-	fuelgaugedesc = fuelgauge->psy_fg.desc;
+	fuelgaugedesc = (struct power_supply_desc *)fuelgauge->psy_fg.desc;
 
 	fuelgaugedesc->name          = fuelgauge->pdata->fuelgauge_name;
 	fuelgaugedesc->type          = POWER_SUPPLY_TYPE_UNKNOWN;
@@ -1713,7 +1713,7 @@ static int sm5703_fuelgauge_probe(struct i2c_client *client,
 		/* goto err_data_free; */
 	}
 
-	psr = power_supply_register(&client->dev, fuelgaugedesc, &psy_cfg);
+	psr = power_supply_register(&client->dev, (const struct power_supply_desc *)fuelgaugedesc, &psy_cfg);
 	if (IS_ERR(psr)) {
 		pr_err("%s: Failed to Register psy_fg\n", __func__);
 		goto err_data_free;

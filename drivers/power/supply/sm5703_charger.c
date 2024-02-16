@@ -1784,8 +1784,8 @@ static int sm5703_charger_probe(struct platform_device *pdev)
 	if (charger->pdata->charger_name == NULL)
 		charger->pdata->charger_name = "sm5703-charger";
 	
-	psy_chg_desc = charger->psy_chg.desc;
-	psy_otg_desc = charger->psy_otg.desc;
+	psy_chg_desc = (struct power_supply_desc *) charger->psy_chg.desc;
+	psy_otg_desc = (struct power_supply_desc *) charger->psy_otg.desc;
 
 	psy_chg_desc->name           = charger->pdata->charger_name;
 	psy_chg_desc->type           = POWER_SUPPLY_TYPE_UNKNOWN;

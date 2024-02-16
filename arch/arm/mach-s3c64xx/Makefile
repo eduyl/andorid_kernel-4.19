@@ -8,9 +8,15 @@ asflags-$(CONFIG_ARCH_MULTIPLATFORM) := -I$(srctree)/$(src)/include -I$(srctree)
 
 # PM
 
-obj-$(CONFIG_PM)		+= pm.o
+obj-$(CONFIG_PM)		+= pm.o irq-pm.o
 obj-$(CONFIG_PM_SLEEP)		+= sleep.o
 obj-$(CONFIG_CPU_IDLE)		+= cpuidle.o
+
+obj-y				+= common.o
+# Device support
+
+obj-y				+= dev-uart.o
+obj-y				+= dev-audio.o
 
 ifdef CONFIG_SAMSUNG_ATAGS
 
@@ -18,18 +24,12 @@ obj-$(CONFIG_PM_SLEEP)          += irq-pm.o
 
 # Core
 
-obj-y				+= common.o
 obj-$(CONFIG_CPU_S3C6400)	+= s3c6400.o
 obj-$(CONFIG_CPU_S3C6410)	+= s3c6410.o
 
 # DMA support
 
 obj-$(CONFIG_S3C64XX_PL080)	+= pl080.o
-
-# Device support
-
-obj-y				+= dev-uart.o
-obj-y				+= dev-audio.o
 
 # Device setup
 

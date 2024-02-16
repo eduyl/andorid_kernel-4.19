@@ -579,6 +579,33 @@ out_irq:
 	return err;
 }
 
+static struct delay_timer mct_delay_timer;
+
+static unsigned long exynos_mct_read_current_timer(void)
+{
+	return (unsigned long)exynos4_read_sched_clock();
+}
+
+static void __init exynos4_timer_delay_init(void)
+{
+	mct_delay_timer.read_current_timer = &exynos_mct_read_current_timer;
+	mct_delay_timer.freq = clk_rate;
+	register_current_timer_delay(&mct_delay_timer);
+}
+
+void __init mct_init(void __iomem *base, int irq_g0, int irq_l0, int irq_l1)
+{
+	mct_irqs[MCT_G0_IRQ] = irq_g0;
+	mct_irqs[MCT_L0_IRQ] = irq_l0;
+	mct_irqs[MCT_L1_IRQ] = irq_l1;
+	mct_int_type = MCT_INT_SPI;
+
+	exynos4_timer_resources(NULL, base);
+	exynos4_clocksource_init();
+	exynos4_clockevent_init();
+	exynos4_timer_delay_init();
+}
+
 static int __init mct_init_dt(struct device_node *np, unsigned int int_type)
 {
 	u32 nr_irqs, i;
