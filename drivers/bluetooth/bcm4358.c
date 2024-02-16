@@ -30,15 +30,15 @@
 #include <linux/platform_device.h>
 #include <linux/rfkill.h>
 #include <linux/serial_core.h>
-#include <linux/wakelock.h>
 #include <linux/of_gpio.h>
 #include <linux/of.h>
 #include <linux/serial_s3c.h>
 
-#include <asm/mach-types.h>
+// #include <asm/mach-types.h>
 
-#include <mach/gpio.h>
-#include <plat/gpio-cfg.h>
+// #include <mach/gpio.h>
+// #include <plat/gpio-cfg.h>
+#include <linux/pm_wakeup.h>
 
 #define BT_LPM_ENABLE
 
@@ -62,8 +62,8 @@ struct bcm_bt_lpm {
 
 	struct uart_port *uport;
 
-	struct wake_lock host_wake_lock;
-	struct wake_lock bt_wake_lock;
+	struct wakeup_source *host_wake_lock;
+	struct wakeup_source *bt_wake_lock;
 } bt_lpm;
 
 struct bcm_bt_gpio {
@@ -124,7 +124,7 @@ static void set_wake_locked(int wake)
 #endif
 
 	if (wake)
-		wake_lock(&bt_lpm.bt_wake_lock);
+		__pm_stay_awake(bt_lpm.bt_wake_lock);
 
 	gpio_set_value(bt_gpio.bt_wake, wake);
 	bt_lpm.dev_wake = wake;
@@ -154,7 +154,7 @@ static enum hrtimer_restart enter_lpm(struct hrtimer *timer)
 
 	bt_is_running = 0;
 
-	wake_lock_timeout(&bt_lpm.bt_wake_lock, HZ/2);
+	__pm_wakeup_event(bt_lpm.bt_wake_lock, HZ/2);
 
 	return HRTIMER_NORESTART;
 }
@@ -182,14 +182,14 @@ static void update_host_wake_locked(int host_wake)
 	bt_is_running = 1;
 
 	if (host_wake) {
-		wake_lock(&bt_lpm.host_wake_lock);
+		__pm_stay_awake(bt_lpm.host_wake_lock);
 	} else  {
 		/* Take a timed wakelock, so that upper layers can take it.
 		 * The chipset deasserts the hostwake lock, when there is no
 		 * more data to send.
 		 */
 		pr_debug("[BT] update_host_wake_locked host_wake is deasserted. release wakelock in 1s\n");
-		wake_lock_timeout(&bt_lpm.host_wake_lock, HZ/2);
+		__pm_wakeup_event(bt_lpm.host_wake_lock, HZ/2);
 	}
 }
 
@@ -236,10 +236,8 @@ static int bcm_bt_lpm_init(struct platform_device *pdev)
 
 	bt_lpm.host_wake = 0;
 
-	wake_lock_init(&bt_lpm.host_wake_lock, WAKE_LOCK_SUSPEND,
-			 "BT_host_wake");
-	wake_lock_init(&bt_lpm.bt_wake_lock, WAKE_LOCK_SUSPEND,
-			 "BT_bt_wake");
+	bt_lpm.host_wake_lock = wakeup_source_create("BT_host_wake");
+	bt_lpm.bt_wake_lock = wakeup_source_create("BT_bt_wake");
 
 	s3c2410_serial_wake_peer[BT_UPORT] = (s3c_wake_peer_t) bcm_bt_lpm_exit_lpm_locked;
 
@@ -362,8 +360,8 @@ static int bcm4358_bluetooth_remove(struct platform_device *pdev)
 	gpio_free(bt_gpio.bt_wake);
 	gpio_free(bt_gpio.bt_hostwake);
 
-	wake_lock_destroy(&bt_lpm.host_wake_lock);
-	wake_lock_destroy(&bt_lpm.bt_wake_lock);
+	wakeup_source_destroy(bt_lpm.host_wake_lock);
+	wakeup_source_destroy(bt_lpm.bt_wake_lock);
 
 	return 0;
 }

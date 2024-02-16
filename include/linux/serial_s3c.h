@@ -11,7 +11,21 @@
  *  Internal header file for MX1ADS serial ports (UART1 & 2)
  *
  *  Copyright (C) 2002 Shane Nay (shane@minirl.com)
- */
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+*/
 
 #ifndef __ASM_ARM_REGS_SERIAL_H
 #define __ASM_ARM_REGS_SERIAL_H
@@ -198,6 +212,38 @@
 #define S3C64XX_UINTM_ERR_MSK   (1 << S3C64XX_UINTM_ERROR)
 #define S3C64XX_UINTM_TXD_MSK	(1 << S3C64XX_UINTM_TXD)
 
+/* Following are specific to EXYNOS5 */
+#define EXYNOS5_UCON_TXBURST_SZ         (20)
+#define EXYNOS5_UCON_RXBURST_SZ         (16)
+#define EXYNOS5_UCON_TIMEOUT_VAL        (12)
+#define EXYNOS5_UCON_EMPTYINT_EN        (11)
+#define EXYNOS5_UCON_DMASUS_EN          (10)
+#define EXYNOS5_UCON_TIMEOUT_EN         (7)
+#define EXYNOS5_UCON_TXDMA_MODE         (2<<2)
+#define EXYNOS5_UCON_TXCPU_MODE         (1<<2)
+#define EXYNOS5_UCON_RXDMA_MODE         (2<<0)
+#define EXYNOS5_UCON_RXCPU_MODE         (1<<0)
+#define EXYNOS5_UCON_TXMODE_CL          (3<<2)
+#define EXYNOS5_UCON_RXMODE_CL          (3<<0)
+
+#define EXYNOS5_UTRSTAT_TIMEOUT         (1<<3)
+
+/* Following are specific to DMA MODE */
+#define UCON_TXBURST_SZ         EXYNOS5_UCON_TXBURST_SZ
+#define UCON_RXBURST_SZ         EXYNOS5_UCON_RXBURST_SZ
+#define UCON_TIMEOUT_VAL        EXYNOS5_UCON_TIMEOUT_VAL
+#define UCON_EMPTYINT_EN        EXYNOS5_UCON_EMPTYINT_EN
+#define UCON_DMASUS_EN          EXYNOS5_UCON_DMASUS_EN
+#define UCON_TIMEOUT_EN         EXYNOS5_UCON_TIMEOUT_EN
+#define UCON_TXDMA_MODE         EXYNOS5_UCON_TXDMA_MODE
+#define UCON_TXCPU_MODE         EXYNOS5_UCON_TXCPU_MODE
+#define UCON_RXDMA_MODE         EXYNOS5_UCON_RXDMA_MODE
+#define UCON_RXCPU_MODE         EXYNOS5_UCON_RXCPU_MODE
+#define UCON_TXMODE_CL          EXYNOS5_UCON_TXMODE_CL
+#define UCON_RXMODE_CL          EXYNOS5_UCON_RXMODE_CL
+
+#define UTRSTAT_TIMEOUT         EXYNOS5_UTRSTAT_TIMEOUT
+
 /* Following are specific to S5PV210 */
 #define S5PV210_UCON_CLKMASK	(1<<10)
 #define S5PV210_UCON_CLKSHIFT	(10)
@@ -249,6 +295,7 @@
 #ifndef __ASSEMBLY__
 
 #include <linux/serial_core.h>
+struct uart_port;
 
 /* configuration structure for per-machine configurations for the
  * serial port
@@ -256,6 +303,9 @@
  * the pointer is setup by the machine specific initialisation from the
  * arch/arm/mach-s3c2410/ directory.
 */
+
+typedef void (*s3c_wake_peer_t)(struct uart_port *port);
+extern s3c_wake_peer_t s3c2410_serial_wake_peer[CONFIG_SERIAL_SAMSUNG_UARTS];
 
 struct s3c2410_uartcfg {
 	unsigned char	   hwport;	 /* hardware port number */
@@ -269,6 +319,8 @@ struct s3c2410_uartcfg {
 	unsigned long	   ucon;	 /* value of ucon for port */
 	unsigned long	   ulcon;	 /* value of ulcon for port */
 	unsigned long	   ufcon;	 /* value of ufcon for port */
+
+	s3c_wake_peer_t wake_peer[CONFIG_SERIAL_SAMSUNG_UARTS];
 };
 
 #endif /* __ASSEMBLY__ */
