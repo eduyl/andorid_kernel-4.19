@@ -63,6 +63,19 @@ static void gic_check_cpu_features(void)
 #define gic_check_cpu_features()	do { } while(0)
 #endif
 
+/*
+ * Supported arch specific GIC irq extension.
+ * Default make them NULL.
+ */
+struct irq_chip gic_arch_extn = {
+	.irq_eoi	= NULL,
+	.irq_mask	= NULL,
+	.irq_unmask	= NULL,
+	.irq_retrigger	= NULL,
+	.irq_set_type	= NULL,
+	.irq_set_wake	= NULL,
+};
+
 union gic_base {
 	void __iomem *common_base;
 	void __percpu * __iomem *percpu_base;

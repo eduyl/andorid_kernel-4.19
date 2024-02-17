@@ -29,7 +29,7 @@
 #include <mach/irqs.h>
 #include <mach/map.h>
 #include <mach/regs-gpio.h>
-#include <mach/gpio-samsung.h>
+// #include <mach/gpio-samsung.h>
 
 #include <plat/cpu.h>
 #include <plat/gpio-core.h>

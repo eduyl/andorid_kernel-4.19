@@ -13,7 +13,7 @@
 #include <linux/io.h>
 #include <linux/gpio.h>
 
-#include <mach/gpio-samsung.h>
+// #include <mach/gpio-samsung.h>
 
 #include <plat/gpio-core.h>
 #include <plat/pm.h>

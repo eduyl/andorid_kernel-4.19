@@ -266,6 +266,118 @@ static int exynos_get_crit_temp(struct thermal_zone_device *thermal,
 	return ret;
 }
 
+
+/**
+ * get_property - fetch a property of interest for a give cpu.
+ * @cpu: cpu for which the property is required
+ * @input: query parameter
+ * @output: query return
+ * @property: type of query (frequency, level, max level)
+ *
+ * This is the common function to
+ * 1. get maximum cpu cooling states
+ * 2. translate frequency to cooling state
+ * 3. translate cooling state to frequency
+ * Note that the code may be not in good shape
+ * but it is written in this way in order to:
+ * a) reduce duplicate code as most of the code can be shared.
+ * b) make sure the logic is consistent when translating between
+ *    cooling states and frequencies.
+ *
+ * Return: 0 on success, -EINVAL when invalid parameters are passed.
+ */
+static int get_property(unsigned int cpu, unsigned long input,
+			unsigned int *output,
+			enum cpufreq_cooling_property property)
+{
+	int i, j;
+	unsigned long max_level = 0, level = 0;
+	unsigned int freq = CPUFREQ_ENTRY_INVALID;
+	int descend = -1;
+	struct cpufreq_frequency_table *table =
+					cpufreq_frequency_get_table(cpu);
+
+	if (!output)
+		return -EINVAL;
+
+	if (!table)
+		return -EINVAL;
+
+	for (i = 0; table[i].frequency != CPUFREQ_TABLE_END; i++) {
+		/* ignore invalid entries */
+		if (table[i].frequency == CPUFREQ_ENTRY_INVALID)
+			continue;
+
+		/* ignore duplicate entry */
+		if (freq == table[i].frequency)
+			continue;
+
+		/* get the frequency order */
+		if (freq != CPUFREQ_ENTRY_INVALID && descend == -1)
+			descend = !!(freq > table[i].frequency);
+
+		freq = table[i].frequency;
+		max_level++;
+	}
+
+	/* get max level */
+	if (property == GET_MAXL) {
+		*output = (unsigned int)max_level;
+		return 0;
+	}
+
+	if (property == GET_FREQ)
+		level = descend ? input : (max_level - input - 1);
+
+	for (i = 0, j = 0; table[i].frequency != CPUFREQ_TABLE_END; i++) {
+		/* ignore invalid entry */
+		if (table[i].frequency == CPUFREQ_ENTRY_INVALID)
+			continue;
+
+		/* ignore duplicate entry */
+		if (freq == table[i].frequency)
+			continue;
+
+		/* now we have a valid frequency entry */
+		freq = table[i].frequency;
+
+		if (property == GET_LEVEL && (unsigned int)input == freq) {
+			/* get level by frequency */
+			*output = descend ? j : (max_level - j - 1);
+			return 0;
+		}
+		if (property == GET_FREQ && level == j) {
+			/* get frequency by level */
+			*output = freq;
+			return 0;
+		}
+		j++;
+	}
+
+	return -EINVAL;
+}
+
+/**
+ * cpufreq_cooling_get_level - for a give cpu, return the cooling level.
+ * @cpu: cpu for which the level is required
+ * @freq: the frequency of interest
+ *
+ * This function will match the cooling level corresponding to the
+ * requested @freq and return it.
+ *
+ * Return: The matched cooling level on success or THERMAL_CSTATE_INVALID
+ * otherwise.
+ */
+unsigned long cpufreq_cooling_get_level(unsigned int cpu, unsigned int freq)
+{
+	unsigned int val;
+
+	if (get_property(cpu, (unsigned long)freq, &val, GET_LEVEL))
+		return THERMAL_CSTATE_INVALID;
+
+	return (unsigned long)val;
+}
+
 /* Bind callback functions for thermal zone */
 static int exynos_bind(struct thermal_zone_device *thermal,
 			struct thermal_cooling_device *cdev)
@@ -313,7 +425,7 @@ static int exynos_bind(struct thermal_zone_device *thermal,
 				clip_data->freq_clip_max_kfc = policy.min;
 			}
 
-			level = get_level(cdev, clip_data->freq_clip_max_kfc); //cpufreq_cooling_get_level(CA7_POLICY_CORE, clip_data->freq_clip_max_kfc);
+			level = cpufreq_cooling_get_level(CA7_POLICY_CORE, clip_data->freq_clip_max_kfc);
 		} else if (cluster_idx == CA15) {
 			cpufreq_get_policy(&policy, CA15_POLICY_CORE);
 
@@ -325,10 +437,10 @@ static int exynos_bind(struct thermal_zone_device *thermal,
 				clip_data->freq_clip_max = policy.min;
 			}
 
-			level = get_level(cdev, clip_data->freq_clip_max); //cpufreq_cooling_get_level(CA15_POLICY_CORE, clip_data->freq_clip_max);
+			level = cpufreq_cooling_get_level(CA15_POLICY_CORE, clip_data->freq_clip_max);
 		}
 #else
-		level = get_level(cdev, clip_data->freq_clip_max);  //cpufreq_cooling_get_level(CS_POLICY_CORE, clip_data->freq_clip_max);
+		level = cpufreq_cooling_get_level(CS_POLICY_CORE, clip_data->freq_clip_max);
 #endif
 		if (level == THERMAL_CSTATE_INVALID) {
 			// thermal->cooling_dev_en = false;
