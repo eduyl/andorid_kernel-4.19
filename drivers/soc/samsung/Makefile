@@ -15,6 +15,7 @@ ifeq ($(CONFIG_SOC_EXYNOS5433),y)
 obj-$(CONFIG_SUSPEND)		+= pm-exynos5433.o
 obj-$(CONFIG_CPU_IDLE)		+= cpuidle-exynos5433.o
 obj-$(CONFIG_CPU_IDLE)		+= cpuidle_profiler.o
+obj-$(CONFIG_CPU_IDLE)		+= exynos-pm.o
 endif
 obj-$(CONFIG_ARCH_EXYNOS)	+= firmware.o
 obj-$(CONFIG_SOC_EXYNOS5433)	+= pmu-exynos5433.o

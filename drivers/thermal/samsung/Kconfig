@@ -8,3 +8,10 @@ config EXYNOS_THERMAL
 	  the TMU, reports temperature and handles cooling action if defined.
 	  This driver uses the Exynos core thermal APIs and TMU configuration
 	  data from the supported SoCs.
+	  
+config EXYNOS_SWTRIP
+	bool "SW TRIP Feature on Samsung EXYNOS"
+	depends on (ARCH_EXYNOS4 || ARCH_EXYNOS5)
+	depends on EXYNOS_THERMAL
+	help
+	  Support for SWTRIP uevent on SAMSUNG EXYNOS series of SOC

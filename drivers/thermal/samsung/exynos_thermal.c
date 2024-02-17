@@ -27,7 +27,6 @@
 #include <linux/slab.h>
 #include <linux/platform_device.h>
 #include <linux/interrupt.h>
-#include <linux/ipa.h>
 #include <linux/workqueue.h>
 #include <linux/sysfs.h>
 #include <linux/kobject.h>
@@ -199,13 +198,15 @@ static int exynos_get_mode(struct thermal_zone_device *thermal,
 static int exynos_set_mode(struct thermal_zone_device *thermal,
 			enum thermal_device_mode mode)
 {
+	enum thermal_notify_event event = THERMAL_EVENT_UNSPECIFIED;
+
 	if (!th_zone->therm_dev) {
 		pr_notice("thermal zone not registered\n");
 		return 0;
 	}
 
 	th_zone->mode = mode;
-	thermal_zone_device_update(th_zone->therm_dev);
+	thermal_zone_device_update(th_zone->therm_dev, event);
 	return 0;
 }
 
@@ -233,7 +234,7 @@ static int exynos_get_trip_type(struct thermal_zone_device *thermal, int trip,
 
 /* Get trip temperature callback functions for thermal zone */
 static int exynos_get_trip_temp(struct thermal_zone_device *thermal, int trip,
-				unsigned long *temp)
+				int *temp)
 {
 	int active_size, passive_size;
 
@@ -252,7 +253,7 @@ static int exynos_get_trip_temp(struct thermal_zone_device *thermal, int trip,
 
 /* Get critical temperature callback functions for thermal zone */
 static int exynos_get_crit_temp(struct thermal_zone_device *thermal,
-				unsigned long *temp)
+				int *temp)
 {
 	int ret;
 	int active_size, passive_size;
@@ -312,7 +313,7 @@ static int exynos_bind(struct thermal_zone_device *thermal,
 				clip_data->freq_clip_max_kfc = policy.min;
 			}
 
-			level = cpufreq_cooling_get_level(CA7_POLICY_CORE, clip_data->freq_clip_max_kfc);
+			level = get_level(cdev, clip_data->freq_clip_max_kfc); //cpufreq_cooling_get_level(CA7_POLICY_CORE, clip_data->freq_clip_max_kfc);
 		} else if (cluster_idx == CA15) {
 			cpufreq_get_policy(&policy, CA15_POLICY_CORE);
 
@@ -324,13 +325,13 @@ static int exynos_bind(struct thermal_zone_device *thermal,
 				clip_data->freq_clip_max = policy.min;
 			}
 
-			level = cpufreq_cooling_get_level(CA15_POLICY_CORE, clip_data->freq_clip_max);
+			level = get_level(cdev, clip_data->freq_clip_max); //cpufreq_cooling_get_level(CA15_POLICY_CORE, clip_data->freq_clip_max);
 		}
 #else
-		level = cpufreq_cooling_get_level(CS_POLICY_CORE, clip_data->freq_clip_max);
+		level = get_level(cdev, clip_data->freq_clip_max);  //cpufreq_cooling_get_level(CS_POLICY_CORE, clip_data->freq_clip_max);
 #endif
 		if (level == THERMAL_CSTATE_INVALID) {
-			thermal->cooling_dev_en = false;
+			// thermal->cooling_dev_en = false;
 			return 0;
 		}
 		exynos_get_trip_type(th_zone->therm_dev, i, &type);
@@ -338,9 +339,9 @@ static int exynos_bind(struct thermal_zone_device *thermal,
 		case THERMAL_TRIP_ACTIVE:
 		case THERMAL_TRIP_PASSIVE:
 			if (thermal_zone_bind_cooling_device(thermal, i, cdev,
-								level, 0)) {
+								level, 0, THERMAL_WEIGHT_DEFAULT)) {
 				pr_err("error binding cdev inst %d\n", i);
-				thermal->cooling_dev_en = false;
+				// thermal->cooling_dev_en = false;
 				ret = -EINVAL;
 			}
 			th_zone->bind = true;
@@ -531,7 +532,7 @@ static void exynos_check_gpu_noti_state(int temp)
 
 /* Get temperature callback functions for thermal zone */
 static int exynos_get_temp(struct thermal_zone_device *thermal,
-			unsigned long *temp)
+			int *temp)
 {
 	void *data;
 
@@ -546,9 +547,10 @@ static int exynos_get_temp(struct thermal_zone_device *thermal,
 	return 0;
 }
 
+//int (*set_emul_temp) (struct thermal_zone_device *, int);
 /* Get temperature callback functions for thermal zone */
 static int exynos_set_emul_temp(struct thermal_zone_device *thermal,
-						unsigned long temp)
+						int temp)
 {
 	void *data;
 	int ret = -EINVAL;
@@ -568,7 +570,7 @@ static int exynos_get_trend(struct thermal_zone_device *thermal,
 			int trip, enum thermal_trend *trend)
 {
 	int ret;
-	unsigned long trip_temp;
+	int trip_temp;
 
 	ret = exynos_get_trip_temp(thermal, trip, &trip_temp);
 	if (ret < 0)
@@ -654,6 +656,7 @@ static void exynos_report_trigger(void)
 	char data[10];
 	char *envp[] = { data, NULL };
 	enum thermal_trip_type type = 0;
+	enum thermal_notify_event event = THERMAL_EVENT_UNSPECIFIED;
 
 	if (!th_zone || !th_zone->therm_dev)
 		return;
@@ -666,7 +669,7 @@ static void exynos_report_trigger(void)
 		}
 	}
 
-	thermal_zone_device_update(th_zone->therm_dev);
+	thermal_zone_device_update(th_zone->therm_dev, event);
 
 	mutex_lock(&th_zone->therm_dev->lock);
 	/* Find the level for which trip happened */
@@ -2086,7 +2089,7 @@ static int exynos_tmu_probe(struct platform_device *pdev)
 			goto err_get_resource;
 		}
 
-		data->base[i] = devm_request_and_ioremap(&pdev->dev, data->mem[i]);
+		data->base[i] = devm_ioremap_resource(&pdev->dev, data->mem[i]);
 		if (IS_ERR(data->base[i])) {
 			ret = PTR_ERR(data->base[i]);
 			dev_err(&pdev->dev, "Failed to ioremap memory\n");

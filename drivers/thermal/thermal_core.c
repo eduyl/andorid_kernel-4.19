@@ -1213,7 +1213,7 @@ exit:
  */
 struct thermal_zone_device *
 thermal_zone_device_register(const char *type, int trips, int mask,
-			     void *devdata, struct thermal_zone_device_ops *ops,
+			     void *devdata, const struct thermal_zone_device_ops *ops,
 			     struct thermal_zone_params *tzp, int passive_delay,
 			     int polling_delay)
 {

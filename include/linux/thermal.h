@@ -128,6 +128,9 @@ struct thermal_zone_device_ops {
 	bool (*is_wakeable)(struct thermal_zone_device *);
 	int (*set_polling_delay)(struct thermal_zone_device *, int);
 	int (*set_passive_delay)(struct thermal_zone_device *, int);
+#if defined(CONFIG_SOC_EXYNOS5430) || defined(CONFIG_SOC_EXYNOS5422) || defined(CONFIG_SOC_EXYNOS5433)	
+	int (*throttle_cpu_hotplug) (struct thermal_zone_device *);
+#endif	
 };
 
 struct thermal_cooling_device_ops {
@@ -504,7 +507,7 @@ int power_actor_get_min_power(struct thermal_cooling_device *,
 int power_actor_set_power(struct thermal_cooling_device *,
 			  struct thermal_instance *, u32);
 struct thermal_zone_device *thermal_zone_device_register(const char *, int, int,
-		void *, struct thermal_zone_device_ops *,
+		void *, const struct thermal_zone_device_ops *,
 		struct thermal_zone_params *, int, int);
 void thermal_zone_device_unregister(struct thermal_zone_device *);
 
@@ -552,7 +555,7 @@ static inline int power_actor_set_power(struct thermal_cooling_device *cdev,
 { return 0; }
 static inline struct thermal_zone_device *thermal_zone_device_register(
 	const char *type, int trips, int mask, void *devdata,
-	struct thermal_zone_device_ops *ops,
+	const struct thermal_zone_device_ops *ops,
 	struct thermal_zone_params *tzp,
 	int passive_delay, int polling_delay)
 { return ERR_PTR(-ENODEV); }

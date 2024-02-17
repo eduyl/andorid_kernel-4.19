@@ -1770,7 +1770,7 @@ config UACCESS_WITH_MEMCPY
 config SECCOMP
 	bool
 	prompt "Enable seccomp to safely compute untrusted bytecode"
-	---help---
+	help
 	  This kernel feature is useful for number crunching applications
 	  that may need to compute untrusted bytecode during their
 	  execution. By using pipes or other transports made available to

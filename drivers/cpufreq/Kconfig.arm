@@ -298,3 +298,18 @@ config ARM_PXA2xx_CPUFREQ
 	  This add the CPUFreq driver support for Intel PXA2xx SOCs.
 
 	  If in doubt, say N.
+
+config ARM_EXYNOS_MP_CPUFREQ
+	bool "SAMSUNG EXYNOS SoCs for MP"
+	depends on ARCH_EXYNOS
+	help
+	  This adds the MP CPUFreq driver common part for Samsung
+	  EXYNOS SoCs.
+
+	  If in doubt, say N.
+
+config ARM_EXYNOS5433_CPUFREQ
+	def_bool SOC_EXYNOS5433
+	help
+	  This adds the CPUFreq driver for Samsung EXYNOS5433
+	  SoC.
