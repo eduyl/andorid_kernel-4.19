@@ -1681,7 +1681,7 @@ static int  __init exynos_set_debug_mem(void)
 	static char *smc_debug_mem;
 	char *phys;
 
-	smc_debug_mem = kmalloc(PAGE_SIZE, GFP_KERNEL);
+	smc_debug_mem = kzalloc(PAGE_SIZE, GFP_KERNEL);
 
 	if (!smc_debug_mem) {
 		pr_err("%s: kmalloc for smc_debug failed.\n", __func__);
@@ -1689,7 +1689,6 @@ static int  __init exynos_set_debug_mem(void)
 	}
 
 	/* to map & flush memory */
-	memset(smc_debug_mem, 0x00, PAGE_SIZE);
 	dmac_flush_range(smc_debug_mem, smc_debug_mem+PAGE_SIZE);
 
 	phys = (char *)virt_to_phys(smc_debug_mem);
@@ -1699,9 +1698,9 @@ static int  __init exynos_set_debug_mem(void)
 
 	/* correct return value is input size */
 	if (ret != PAGE_SIZE) {
-	pr_err("%s: Can not set the address to el3 monitor. "
-			"ret = 0x%x. free the kmem\n", __func__, ret);
-	kfree(smc_debug_mem);
+		pr_err("%s: Can not set the address to el3 monitor. "
+				"ret = 0x%x. free the kmem\n", __func__, ret);
+		kfree(smc_debug_mem);
 	}
 
 	return 0;
