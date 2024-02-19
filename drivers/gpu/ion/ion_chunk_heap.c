@@ -104,7 +104,7 @@ static void ion_chunk_heap_free(struct ion_buffer *buffer)
 
 	allocated_size = ALIGN(buffer->size, chunk_heap->chunk_size);
 
-	ion_heap_buffer_zero(buffer);
+	gpu_ion_heap_buffer_zero(buffer);
 
 	for_each_sg(table->sgl, sg, table->nents, i) {
 		if (ion_buffer_cached(buffer))
@@ -136,9 +136,9 @@ static struct ion_heap_ops chunk_heap_ops = {
 	.free = ion_chunk_heap_free,
 	.map_dma = ion_chunk_heap_map_dma,
 	.unmap_dma = ion_chunk_heap_unmap_dma,
-	.map_user = ion_heap_map_user,
-	.map_kernel = ion_heap_map_kernel,
-	.unmap_kernel = ion_heap_unmap_kernel,
+	.map_user = gpu_ion_heap_map_user,
+	.map_kernel = gpu_ion_heap_map_kernel,
+	.unmap_kernel = gpu_ion_heap_unmap_kernel,
 };
 
 struct ion_heap *ion_chunk_heap_create(struct ion_platform_heap *heap_data)
@@ -173,7 +173,7 @@ struct ion_heap *ion_chunk_heap_create(struct ion_platform_heap *heap_data)
 		struct page *page = phys_to_page(chunk_heap->base + i);
 		struct page **pages = &page;
 
-		ret = map_vm_area(vm_struct, pgprot, &pages);
+		ret = map_vm_area(vm_struct, pgprot, pages);
 		if (ret)
 			goto error_map_vm_area;
 		memset(vm_struct->addr, 0, PAGE_SIZE);

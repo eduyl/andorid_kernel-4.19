@@ -580,5 +580,6 @@ static inline void dma_buf_set_destructor(struct dma_buf *dmabuf,
 	dmabuf->dtor = dtor;
 	dmabuf->dtor_data = dtor_data;
 }
-
+// ijh resurrect legacy function
+struct dma_buf *get_dma_buf_file(struct file *);
 #endif /* __DMA_BUF_H__ */

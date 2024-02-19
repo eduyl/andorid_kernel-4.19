@@ -58,6 +58,19 @@
 struct cma;
 struct page;
 
+struct cma_info {
+	phys_addr_t	base;
+	size_t		size;
+	size_t		free;
+	bool		isolated;
+};
+
+/*
+ * There is always at least global CMA area and a few optional device
+ * private areas configured in kernel .config.
+ */
+#define MAX_CMA_AREAS	(1 + CONFIG_CMA_AREAS)
+
 #ifdef CONFIG_DMA_CMA
 
 extern struct cma *dma_contiguous_default_area;
@@ -115,7 +128,10 @@ struct page *dma_alloc_from_contiguous(struct device *dev, size_t count,
 				       unsigned int order, bool no_warn);
 bool dma_release_from_contiguous(struct device *dev, struct page *pages,
 				 int count);
-
+// ijh resurrect legacy
+int dma_contiguous_info(struct device *dev, struct cma_info *info);
+int dma_contiguous_isolate(struct device *dev);
+void dma_contiguous_deisolate(struct device *dev);
 #else
 
 static inline struct cma *dev_get_cma_area(struct device *dev)

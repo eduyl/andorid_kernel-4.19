@@ -130,22 +130,22 @@ struct ion_handle {
 
 static struct ion_device *g_idev;
 
-static inline struct page *ion_buffer_page(struct page *page)
+static inline struct page *gpu_ion_buffer_page(struct page *page)
 {
 	return (struct page *)((unsigned long)page & ~(1UL));
 }
 
-static inline bool ion_buffer_page_is_dirty(struct page *page)
+static inline bool gpu_ion_buffer_page_is_dirty(struct page *page)
 {
 	return !!((unsigned long)page & 1UL);
 }
 
-static inline void ion_buffer_page_dirty(struct page **page)
+static inline void gpu_ion_buffer_page_dirty(struct page **page)
 {
 	*page = (struct page *)((unsigned long)(*page) | 1UL);
 }
 
-static inline void ion_buffer_page_clean(struct page **page)
+static inline void gpu_ion_buffer_page_clean(struct page **page)
 {
 	*page = (struct page *)((unsigned long)(*page) & ~(1UL));
 }
@@ -209,7 +209,7 @@ void ION_EVENT_SHRINK(struct ion_device *dev, size_t size)
 	log->data.shrink.size = size;
 }
 
-static struct ion_task *ion_buffer_task_lookup(struct ion_buffer *buffer,
+static struct ion_task *gpu_ion_buffer_task_lookup(struct ion_buffer *buffer,
 							struct device *master)
 {
 	bool found = false;
@@ -225,7 +225,7 @@ static struct ion_task *ion_buffer_task_lookup(struct ion_buffer *buffer,
 	return found ? task : NULL;
 }
 
-static void ion_buffer_set_task_info(struct ion_buffer *buffer)
+static void gpu_ion_buffer_set_task_info(struct ion_buffer *buffer)
 {
 	INIT_LIST_HEAD(&buffer->master_list);
 	get_task_comm(buffer->task_comm, current->group_leader);
@@ -234,12 +234,12 @@ static void ion_buffer_set_task_info(struct ion_buffer *buffer)
 	buffer->tid = task_pid_nr(current);
 }
 
-static void ion_buffer_task_add(struct ion_buffer *buffer,
+static void gpu_ion_buffer_task_add(struct ion_buffer *buffer,
 					struct device *master)
 {
 	struct ion_task *task;
 
-	task = ion_buffer_task_lookup(buffer, master);
+	task = gpu_ion_buffer_task_lookup(buffer, master);
 	if (!task) {
 		task = kzalloc(sizeof(*task), GFP_KERNEL);
 		if (task) {
@@ -252,15 +252,15 @@ static void ion_buffer_task_add(struct ion_buffer *buffer,
 	}
 }
 
-static void ion_buffer_task_add_lock(struct ion_buffer *buffer,
+static void gpu_ion_buffer_task_add_lock(struct ion_buffer *buffer,
 					struct device *master)
 {
 	mutex_lock(&buffer->lock);
-	ion_buffer_task_add(buffer, master);
+	gpu_ion_buffer_task_add(buffer, master);
 	mutex_unlock(&buffer->lock);
 }
 
-static void __ion_buffer_task_remove(struct kref *kref)
+static void __gpu_ion_buffer_task_remove(struct kref *kref)
 {
 	struct ion_task *task = container_of(kref, struct ion_task, ref);
 
@@ -268,28 +268,28 @@ static void __ion_buffer_task_remove(struct kref *kref)
 	kfree(task);
 }
 
-static void ion_buffer_task_remove(struct ion_buffer *buffer,
+static void gpu_ion_buffer_task_remove(struct ion_buffer *buffer,
 					struct device *master)
 {
 	struct ion_task *task, *tmp;
 
 	list_for_each_entry_safe(task, tmp, &buffer->master_list, list) {
 		if (task->master == master) {
-			kref_put(&task->ref, __ion_buffer_task_remove);
+			kref_put(&task->ref, __gpu_ion_buffer_task_remove);
 			break;
 		}
 	}
 }
 
-static void ion_buffer_task_remove_lock(struct ion_buffer *buffer,
+static void gpu_ion_buffer_task_remove_lock(struct ion_buffer *buffer,
 					struct device *master)
 {
 	mutex_lock(&buffer->lock);
-	ion_buffer_task_remove(buffer, master);
+	gpu_ion_buffer_task_remove(buffer, master);
 	mutex_unlock(&buffer->lock);
 }
 
-static void ion_buffer_task_remove_all(struct ion_buffer *buffer)
+static void gpu_ion_buffer_task_remove_all(struct ion_buffer *buffer)
 {
 	struct ion_task *task, *tmp;
 
@@ -313,7 +313,7 @@ static void ion_buffer_task_remove_all(struct ion_buffer *buffer)
 #endif
 
 /* this function should only be called while dev->lock is held */
-static void ion_buffer_add(struct ion_device *dev,
+static void gpu_ion_buffer_add(struct ion_device *dev,
 			   struct ion_buffer *buffer)
 {
 	struct rb_node **p = &dev->buffers.rb_node;
@@ -337,12 +337,12 @@ static void ion_buffer_add(struct ion_device *dev,
 	rb_link_node(&buffer->node, parent, p);
 	rb_insert_color(&buffer->node, &dev->buffers);
 
-	ion_buffer_set_task_info(buffer);
-	ion_buffer_task_add(buffer, dev->dev.this_device);
+	gpu_ion_buffer_set_task_info(buffer);
+	gpu_ion_buffer_task_add(buffer, dev->dev.this_device);
 }
 
 /* this function should only be called while dev->lock is held */
-static struct ion_buffer *ion_buffer_create(struct ion_heap *heap,
+static struct ion_buffer *gpu_ion_buffer_create(struct ion_heap *heap,
 				     struct ion_device *dev,
 				     unsigned long len,
 				     unsigned long align,
@@ -425,7 +425,7 @@ static struct ion_buffer *ion_buffer_create(struct ion_heap *heap,
 	for_each_sg(buffer->sg_table->sgl, sg, buffer->sg_table->nents, i)
 		sg_dma_address(sg) = sg_phys(sg);
 	mutex_lock(&dev->buffer_lock);
-	ion_buffer_add(dev, buffer);
+	gpu_ion_buffer_add(dev, buffer);
 	mutex_unlock(&dev->buffer_lock);
 	return buffer;
 
@@ -440,7 +440,7 @@ err2:
 	return ERR_PTR(ret);
 }
 
-void ion_buffer_destroy(struct ion_buffer *buffer)
+void gpu_ion_buffer_destroy(struct ion_buffer *buffer)
 {
 	struct ion_iovm_map *iovm_map;
 	struct ion_iovm_map *tmp;
@@ -461,13 +461,13 @@ void ion_buffer_destroy(struct ion_buffer *buffer)
 	if (buffer->pages)
 		vfree(buffer->pages);
 
-	ion_buffer_task_remove_all(buffer);
+	gpu_ion_buffer_task_remove_all(buffer);
 	ION_EVENT_FREE(buffer, ION_EVENT_DONE());
 
 	kfree(buffer);
 }
 
-static void _ion_buffer_destroy(struct kref *kref)
+static void _gpu_ion_buffer_destroy(struct kref *kref)
 {
 	struct ion_buffer *buffer = container_of(kref, struct ion_buffer, ref);
 	struct ion_heap *heap = buffer->heap;
@@ -478,29 +478,29 @@ static void _ion_buffer_destroy(struct kref *kref)
 	mutex_unlock(&dev->buffer_lock);
 
 	if (heap->flags & ION_HEAP_FLAG_DEFER_FREE)
-		ion_heap_freelist_add(heap, buffer);
+		gpu_ion_heap_freelist_add(heap, buffer);
 	else
-		ion_buffer_destroy(buffer);
+		gpu_ion_buffer_destroy(buffer);
 }
 
-static void ion_buffer_get(struct ion_buffer *buffer)
+static void gpu_ion_buffer_get(struct ion_buffer *buffer)
 {
 	kref_get(&buffer->ref);
 }
 
-static int ion_buffer_put(struct ion_buffer *buffer)
+static int gpu_ion_buffer_put(struct ion_buffer *buffer)
 {
-	return kref_put(&buffer->ref, _ion_buffer_destroy);
+	return kref_put(&buffer->ref, _gpu_ion_buffer_destroy);
 }
 
-static void ion_buffer_add_to_handle(struct ion_buffer *buffer)
+static void gpu_ion_buffer_add_to_handle(struct ion_buffer *buffer)
 {
 	mutex_lock(&buffer->lock);
 	buffer->handle_count++;
 	mutex_unlock(&buffer->lock);
 }
 
-static void ion_buffer_remove_from_handle(struct ion_buffer *buffer)
+static void gpu_ion_buffer_remove_from_handle(struct ion_buffer *buffer)
 {
 	/*
 	 * when a buffer is removed from a handle, if it is not in
@@ -531,7 +531,7 @@ static bool ion_handle_validate(struct ion_client *client,
 	return (idr_find(&client->idr, handle->id) == handle);
 }
 
-static struct ion_handle *ion_handle_create(struct ion_client *client,
+static struct ion_handle *gpu_ion_handle_create(struct ion_client *client,
 				     struct ion_buffer *buffer)
 {
 	struct ion_handle *handle;
@@ -542,16 +542,16 @@ static struct ion_handle *ion_handle_create(struct ion_client *client,
 	kref_init(&handle->ref);
 	RB_CLEAR_NODE(&handle->node);
 	handle->client = client;
-	ion_buffer_get(buffer);
-	ion_buffer_add_to_handle(buffer);
+	gpu_ion_buffer_get(buffer);
+	gpu_ion_buffer_add_to_handle(buffer);
 	handle->buffer = buffer;
 
 	return handle;
 }
 
-static void ion_handle_kmap_put(struct ion_handle *);
+static void gpu_ion_handle_kmap_put(struct ion_handle *);
 
-static void ion_handle_destroy(struct kref *kref)
+static void gpu_ion_handle_destroy(struct kref *kref)
 {
 	struct ion_handle *handle = container_of(kref, struct ion_handle, ref);
 	struct ion_client *client = handle->client;
@@ -559,30 +559,30 @@ static void ion_handle_destroy(struct kref *kref)
 
 	mutex_lock(&buffer->lock);
 	while (handle->kmap_cnt)
-		ion_handle_kmap_put(handle);
+		gpu_ion_handle_kmap_put(handle);
 	mutex_unlock(&buffer->lock);
 
 	idr_remove(&client->idr, handle->id);
 	if (!RB_EMPTY_NODE(&handle->node))
 		rb_erase(&handle->node, &client->handles);
 
-	ion_buffer_remove_from_handle(buffer);
-	ion_buffer_put(buffer);
+	gpu_ion_buffer_remove_from_handle(buffer);
+	gpu_ion_buffer_put(buffer);
 
 	kfree(handle);
 }
 
-struct ion_buffer *ion_handle_buffer(struct ion_handle *handle)
+struct ion_buffer *gpu_ion_handle_buffer(struct ion_handle *handle)
 {
 	return handle->buffer;
 }
 
-static void ion_handle_get(struct ion_handle *handle)
+static void gpu_ion_handle_get(struct ion_handle *handle)
 {
 	kref_get(&handle->ref);
 }
 
-static int ion_handle_put(struct ion_client *client, struct ion_handle *handle)
+static int gpu_ion_handle_put(struct ion_client *client, struct ion_handle *handle)
 {
 	bool valid_handle;
 	int ret;
@@ -596,13 +596,13 @@ static int ion_handle_put(struct ion_client *client, struct ion_handle *handle)
 		return -EINVAL;
 	}
 
-	ret = kref_put(&handle->ref, ion_handle_destroy);
+	ret = kref_put(&handle->ref, gpu_ion_handle_destroy);
 	mutex_unlock(&client->lock);
 
 	return ret;
 }
 
-static struct ion_handle *ion_handle_lookup(struct ion_client *client,
+static struct ion_handle *gpu_ion_handle_lookup(struct ion_client *client,
 					    struct ion_buffer *buffer)
 {
 	struct rb_node *n = client->handles.rb_node;
@@ -619,7 +619,7 @@ static struct ion_handle *ion_handle_lookup(struct ion_client *client,
 	return ERR_PTR(-EINVAL);
 }
 
-static struct ion_handle *ion_handle_get_by_id(struct ion_client *client,
+static struct ion_handle *gpu_ion_handle_get_by_id(struct ion_client *client,
 						int id)
 {
 	struct ion_handle *handle;
@@ -627,13 +627,13 @@ static struct ion_handle *ion_handle_get_by_id(struct ion_client *client,
 	mutex_lock(&client->lock);
 	handle = idr_find(&client->idr, id);
 	if (handle)
-		ion_handle_get(handle);
+		gpu_ion_handle_get(handle);
 	mutex_unlock(&client->lock);
 
 	return handle ? handle : ERR_PTR(-EINVAL);
 }
 
-static int ion_handle_add(struct ion_client *client, struct ion_handle *handle)
+static int gpu_ion_handle_add(struct ion_client *client, struct ion_handle *handle)
 {
 	int id;
 	struct rb_node **p = &client->handles.rb_node;
@@ -664,7 +664,7 @@ static int ion_handle_add(struct ion_client *client, struct ion_handle *handle)
 	return 0;
 }
 
-struct ion_handle *ion_alloc(struct ion_client *client, size_t len,
+struct ion_handle *gpu_ion_alloc(struct ion_client *client, size_t len,
 			     size_t align, unsigned int heap_id_mask,
 			     unsigned int flags)
 {
@@ -696,7 +696,7 @@ struct ion_handle *ion_alloc(struct ion_client *client, size_t len,
 		/* if the caller didn't specify this heap id */
 		if (!((1 << heap->id) & heap_id_mask))
 			continue;
-		buffer = ion_buffer_create(heap, dev, len, align, flags);
+		buffer = gpu_ion_buffer_create(heap, dev, len, align, flags);
 		if (!IS_ERR(buffer))
 			break;
 	}
@@ -708,22 +708,22 @@ struct ion_handle *ion_alloc(struct ion_client *client, size_t len,
 	if (IS_ERR(buffer))
 		return ERR_PTR(PTR_ERR(buffer));
 
-	handle = ion_handle_create(client, buffer);
+	handle = gpu_ion_handle_create(client, buffer);
 
 	/*
 	 * ion_buffer_create will create a buffer with a ref_cnt of 1,
 	 * and ion_handle_create will take a second reference, drop one here
 	 */
-	ion_buffer_put(buffer);
+	gpu_ion_buffer_put(buffer);
 
 	if (IS_ERR(handle))
 		return handle;
 
 	mutex_lock(&client->lock);
-	ret = ion_handle_add(client, handle);
+	ret = gpu_ion_handle_add(client, handle);
 	mutex_unlock(&client->lock);
 	if (ret) {
-		ion_handle_put(client, handle);
+		gpu_ion_handle_put(client, handle);
 		handle = ERR_PTR(ret);
 	}
 
@@ -731,9 +731,9 @@ struct ion_handle *ion_alloc(struct ion_client *client, size_t len,
 
 	return handle;
 }
-EXPORT_SYMBOL(ion_alloc);
+EXPORT_SYMBOL(gpu_ion_alloc);
 
-void ion_free(struct ion_client *client, struct ion_handle *handle)
+void gpu_ion_free(struct ion_client *client, struct ion_handle *handle)
 {
 	bool valid_handle;
 
@@ -748,11 +748,11 @@ void ion_free(struct ion_client *client, struct ion_handle *handle)
 		return;
 	}
 	mutex_unlock(&client->lock);
-	ion_handle_put(client, handle);
+	gpu_ion_handle_put(client, handle);
 }
-EXPORT_SYMBOL(ion_free);
+EXPORT_SYMBOL(gpu_ion_free);
 
-int ion_phys(struct ion_client *client, struct ion_handle *handle,
+int gpu_ion_phys(struct ion_client *client, struct ion_handle *handle,
 	     ion_phys_addr_t *addr, size_t *len)
 {
 	struct ion_buffer *buffer;
@@ -780,9 +780,9 @@ int ion_phys(struct ion_client *client, struct ion_handle *handle,
 	ret = buffer->heap->ops->phys(buffer->heap, buffer, addr, len);
 	return ret;
 }
-EXPORT_SYMBOL(ion_phys);
+EXPORT_SYMBOL(gpu_ion_phys);
 
-static void *ion_buffer_kmap_get(struct ion_buffer *buffer)
+static void *gpu_ion_buffer_kmap_get(struct ion_buffer *buffer)
 {
 	void *vaddr;
 
@@ -804,7 +804,7 @@ static void *ion_buffer_kmap_get(struct ion_buffer *buffer)
 	return vaddr;
 }
 
-static void *ion_handle_kmap_get(struct ion_handle *handle)
+static void *gpu_ion_handle_kmap_get(struct ion_handle *handle)
 {
 	struct ion_buffer *buffer = handle->buffer;
 	void *vaddr;
@@ -813,14 +813,14 @@ static void *ion_handle_kmap_get(struct ion_handle *handle)
 		handle->kmap_cnt++;
 		return buffer->vaddr;
 	}
-	vaddr = ion_buffer_kmap_get(buffer);
+	vaddr = gpu_ion_buffer_kmap_get(buffer);
 	if (IS_ERR(vaddr))
 		return vaddr;
 	handle->kmap_cnt++;
 	return vaddr;
 }
 
-static void ion_buffer_kmap_put(struct ion_buffer *buffer)
+static void gpu_ion_buffer_kmap_put(struct ion_buffer *buffer)
 {
 	buffer->kmap_cnt--;
 	if (!buffer->kmap_cnt) {
@@ -829,16 +829,16 @@ static void ion_buffer_kmap_put(struct ion_buffer *buffer)
 	}
 }
 
-static void ion_handle_kmap_put(struct ion_handle *handle)
+static void gpu_ion_handle_kmap_put(struct ion_handle *handle)
 {
 	struct ion_buffer *buffer = handle->buffer;
 
 	handle->kmap_cnt--;
 	if (!handle->kmap_cnt)
-		ion_buffer_kmap_put(buffer);
+		gpu_ion_buffer_kmap_put(buffer);
 }
 
-void *ion_map_kernel(struct ion_client *client, struct ion_handle *handle)
+void *gpu_ion_map_kernel(struct ion_client *client, struct ion_handle *handle)
 {
 	struct ion_buffer *buffer;
 	void *vaddr;
@@ -861,27 +861,27 @@ void *ion_map_kernel(struct ion_client *client, struct ion_handle *handle)
 	}
 
 	mutex_lock(&buffer->lock);
-	vaddr = ion_handle_kmap_get(handle);
+	vaddr = gpu_ion_handle_kmap_get(handle);
 	mutex_unlock(&buffer->lock);
 	mutex_unlock(&client->lock);
 	return vaddr;
 }
-EXPORT_SYMBOL(ion_map_kernel);
+EXPORT_SYMBOL(gpu_ion_map_kernel);
 
-void ion_unmap_kernel(struct ion_client *client, struct ion_handle *handle)
+void gpu_ion_unmap_kernel(struct ion_client *client, struct ion_handle *handle)
 {
 	struct ion_buffer *buffer;
 
 	mutex_lock(&client->lock);
 	buffer = handle->buffer;
 	mutex_lock(&buffer->lock);
-	ion_handle_kmap_put(handle);
+	gpu_ion_handle_kmap_put(handle);
 	mutex_unlock(&buffer->lock);
 	mutex_unlock(&client->lock);
 }
-EXPORT_SYMBOL(ion_unmap_kernel);
+EXPORT_SYMBOL(gpu_ion_unmap_kernel);
 
-static int ion_debug_client_show(struct seq_file *s, void *unused)
+static int gpu_ion_debug_client_show(struct seq_file *s, void *unused)
 {
 	struct ion_client *client = s->private;
 	struct rb_node *n;
@@ -943,19 +943,19 @@ static int ion_debug_client_show(struct seq_file *s, void *unused)
 	return 0;
 }
 
-static int ion_debug_client_open(struct inode *inode, struct file *file)
+static int gpu_ion_debug_client_open(struct inode *inode, struct file *file)
 {
-	return single_open(file, ion_debug_client_show, inode->i_private);
+	return single_open(file, gpu_ion_debug_client_show, inode->i_private);
 }
 
 static const struct file_operations debug_client_fops = {
-	.open = ion_debug_client_open,
+	.open = gpu_ion_debug_client_open,
 	.read = seq_read,
 	.llseek = seq_lseek,
 	.release = single_release,
 };
 
-struct ion_client *ion_client_create(struct ion_device *dev,
+struct ion_client *gpu_ion_client_create(struct ion_device *dev,
 				     const char *name)
 {
 	struct ion_client *client;
@@ -1016,9 +1016,9 @@ struct ion_client *ion_client_create(struct ion_device *dev,
 
 	return client;
 }
-EXPORT_SYMBOL(ion_client_create);
+EXPORT_SYMBOL(gpu_ion_client_create);
 
-void ion_client_destroy(struct ion_client *client)
+void gpu_ion_client_destroy(struct ion_client *client)
 {
 	struct ion_device *dev = client->dev;
 	struct rb_node *n;
@@ -1027,7 +1027,7 @@ void ion_client_destroy(struct ion_client *client)
 	while ((n = rb_first(&client->handles))) {
 		struct ion_handle *handle = rb_entry(n, struct ion_handle,
 						     node);
-		ion_handle_destroy(&handle->ref);
+		gpu_ion_handle_destroy(&handle->ref);
 	}
 
 	idr_destroy(&client->idr);
@@ -1041,9 +1041,9 @@ void ion_client_destroy(struct ion_client *client)
 
 	kfree(client);
 }
-EXPORT_SYMBOL(ion_client_destroy);
+EXPORT_SYMBOL(gpu_ion_client_destroy);
 
-struct sg_table *ion_sg_table(struct ion_client *client,
+struct sg_table *gpu_ion_sg_table(struct ion_client *client,
 			      struct ion_handle *handle)
 {
 	struct ion_buffer *buffer;
@@ -1064,21 +1064,21 @@ struct sg_table *ion_sg_table(struct ion_client *client,
 	mutex_unlock(&client->lock);
 	return table;
 }
-EXPORT_SYMBOL(ion_sg_table);
+EXPORT_SYMBOL(gpu_ion_sg_table);
 
-static void ion_buffer_sync_for_device(struct ion_buffer *buffer,
+static void gpu_ion_buffer_sync_for_device(struct ion_buffer *buffer,
 				       struct device *dev,
 				       enum dma_data_direction direction);
 
-static struct sg_table *ion_map_dma_buf(struct dma_buf_attachment *attachment,
+static struct sg_table *gpu_ion_map_dma_buf(struct dma_buf_attachment *attachment,
 					enum dma_data_direction direction)
 {
 	struct dma_buf *dmabuf = attachment->dmabuf;
 	struct ion_buffer *buffer = dmabuf->priv;
 
-	ion_buffer_sync_for_device(buffer, attachment->dev, direction);
+	gpu_ion_buffer_sync_for_device(buffer, attachment->dev, direction);
 
-	ion_buffer_task_add_lock(buffer, attachment->dev);
+	gpu_ion_buffer_task_add_lock(buffer, attachment->dev);
 
 	return buffer->sg_table;
 }
@@ -1086,13 +1086,13 @@ static struct sg_table *ion_map_dma_buf(struct dma_buf_attachment *attachment,
 extern void exynos_ion_sync_sg_for_cpu(struct device *dev, size_t size,
 					struct sg_table *sgt,
 					enum dma_data_direction dir);
-static void ion_unmap_dma_buf(struct dma_buf_attachment *attachment,
+static void gpu_ion_unmap_dma_buf(struct dma_buf_attachment *attachment,
 			      struct sg_table *table,
 			      enum dma_data_direction direction)
 {
 	struct dma_buf *dmabuf = attachment->dmabuf;
 	struct ion_buffer *buffer = dmabuf->priv;
-	ion_buffer_task_remove_lock(attachment->dmabuf->priv, attachment->dev);
+	gpu_ion_buffer_task_remove_lock(attachment->dmabuf->priv, attachment->dev);
 	// P160321-02542 - Fix for A800I with dimension 576 * 576, buffer size is 1335296
 	if (ion_buffer_sync_force(buffer) && (buffer->size == 2080768 || buffer->size == 1335296))
 		exynos_ion_sync_sg_for_cpu(attachment->dev, buffer->size,
@@ -1104,7 +1104,7 @@ struct ion_vma_list {
 	struct vm_area_struct *vma;
 };
 
-static void ion_buffer_sync_for_device(struct ion_buffer *buffer,
+static void gpu_ion_buffer_sync_for_device(struct ion_buffer *buffer,
 				       struct device *dev,
 				       enum dma_data_direction dir)
 {
@@ -1130,13 +1130,13 @@ static void ion_buffer_sync_for_device(struct ion_buffer *buffer,
 	for (i = 0; i < pages; i++) {
 		struct page *page = buffer->pages[i];
 
-		if (ion_buffer_page_is_dirty(page)) {
+		if (gpu_ion_buffer_page_is_dirty(page)) {
 			struct scatterlist sg;
-			sg_set_page(&sg, ion_buffer_page(page), PAGE_SIZE, 0);
+			sg_set_page(&sg, gpu_ion_buffer_page(page), PAGE_SIZE, 0);
 			sg_dma_address(&sg) = sg_phys(&sg);
 			dma_sync_sg_for_device(dev, &sg, 1, dir);
 		}
-		ion_buffer_page_clean(buffer->pages + i);
+		gpu_ion_buffer_page_clean(buffer->pages + i);
 	}
 	list_for_each_entry(vma_list, &buffer->vmas, list) {
 		struct vm_area_struct *vma = vma_list->vma;
@@ -1147,14 +1147,14 @@ static void ion_buffer_sync_for_device(struct ion_buffer *buffer,
 }
 
 //vm_fault_t (*fault)(struct vm_fault *vmf);
-vm_fault_t ion_vm_fault(struct vm_fault *vmf)
+vm_fault_t gpu_ion_vm_fault(struct vm_fault *vmf)
 {
 	struct vm_area_struct *vma = vmf->vma;
 	struct ion_buffer *buffer = vma->vm_private_data;
 	int ret;
 
 	mutex_lock(&buffer->lock);
-	ion_buffer_page_dirty(buffer->pages + vmf->pgoff);
+	gpu_ion_buffer_page_dirty(buffer->pages + vmf->pgoff);
 
 	/*
 	 * This function is called from page-fault handler.
@@ -1167,7 +1167,7 @@ vm_fault_t ion_vm_fault(struct vm_fault *vmf)
 
 	BUG_ON(!buffer->pages || !buffer->pages[vmf->pgoff]);
 	ret = vm_insert_page(vma, (unsigned long)vmf->address,
-			     ion_buffer_page(buffer->pages[vmf->pgoff]));
+			     gpu_ion_buffer_page(buffer->pages[vmf->pgoff]));
 	mutex_unlock(&buffer->lock);
 	if (ret)
 		return VM_FAULT_ERROR;
@@ -1175,7 +1175,7 @@ vm_fault_t ion_vm_fault(struct vm_fault *vmf)
 	return VM_FAULT_NOPAGE;
 }
 
-static void ion_vm_open(struct vm_area_struct *vma)
+static void gpu_ion_vm_open(struct vm_area_struct *vma)
 {
 	struct ion_buffer *buffer = vma->vm_private_data;
 	struct ion_vma_list *vma_list;
@@ -1190,7 +1190,7 @@ static void ion_vm_open(struct vm_area_struct *vma)
 	pr_debug("%s: adding %p\n", __func__, vma);
 }
 
-static void ion_vm_close(struct vm_area_struct *vma)
+static void gpu_ion_vm_close(struct vm_area_struct *vma)
 {
 	struct ion_buffer *buffer = vma->vm_private_data;
 	struct ion_vma_list *vma_list, *tmp;
@@ -1209,12 +1209,12 @@ static void ion_vm_close(struct vm_area_struct *vma)
 }
 
 struct vm_operations_struct ion_vma_ops = {
-	.open = ion_vm_open,
-	.close = ion_vm_close,
-	.fault = ion_vm_fault,
+	.open = gpu_ion_vm_open,
+	.close = gpu_ion_vm_close,
+	.fault = gpu_ion_vm_fault,
 };
 
-static int ion_mmap(struct dma_buf *dmabuf, struct vm_area_struct *vma)
+static int gpu_ion_mmap(struct dma_buf *dmabuf, struct vm_area_struct *vma)
 {
 	struct ion_buffer *buffer = dmabuf->priv;
 	int ret = 0;
@@ -1253,7 +1253,7 @@ static int ion_mmap(struct dma_buf *dmabuf, struct vm_area_struct *vma)
 	if (ion_buffer_fault_user_mappings(buffer)) {
 		vma->vm_private_data = buffer;
 		vma->vm_ops = &ion_vma_ops;
-		ion_vm_open(vma);
+		gpu_ion_vm_open(vma);
 		ION_EVENT_MMAP(buffer, ION_EVENT_DONE());
 		return 0;
 	}
@@ -1278,25 +1278,25 @@ static int ion_mmap(struct dma_buf *dmabuf, struct vm_area_struct *vma)
 	return ret;
 }
 
-static void ion_dma_buf_release(struct dma_buf *dmabuf)
+static void gpu_ion_dma_buf_release(struct dma_buf *dmabuf)
 {
 	struct ion_buffer *buffer = dmabuf->priv;
-	ion_buffer_put(buffer);
+	gpu_ion_buffer_put(buffer);
 }
 
 //void *(*vmap)(struct dma_buf *);
-static void *ion_dma_buf_kmap(struct dma_buf *dmabuf)
+static void *gpu_ion_dma_buf_kmap(struct dma_buf *dmabuf)
 {
 	struct ion_buffer *buffer = dmabuf->priv;
 	return buffer->vaddr;
 }
 // void (*vunmap)(struct dma_buf *, void *vaddr);
-static void ion_dma_buf_kunmap(struct dma_buf *dmabuf, void *ptr)
+static void gpu_ion_dma_buf_kunmap(struct dma_buf *dmabuf, void *ptr)
 {
 	// return;
 }
 
-static int ion_dma_buf_begin_cpu_access(struct dma_buf *dmabuf, enum dma_data_direction direction)
+static int gpu_ion_dma_buf_begin_cpu_access(struct dma_buf *dmabuf, enum dma_data_direction direction)
 {
 	struct ion_buffer *buffer = dmabuf->priv;
 	void *vaddr;
@@ -1308,32 +1308,32 @@ static int ion_dma_buf_begin_cpu_access(struct dma_buf *dmabuf, enum dma_data_di
 	}
 
 	mutex_lock(&buffer->lock);
-	vaddr = ion_buffer_kmap_get(buffer);
+	vaddr = gpu_ion_buffer_kmap_get(buffer);
 	mutex_unlock(&buffer->lock);
 	if (IS_ERR(vaddr))
 		return PTR_ERR(vaddr);
 	return 0;
 }
 //int (*end_cpu_access)(struct dma_buf *, enum dma_data_direction);
-int ion_dma_buf_end_cpu_access(struct dma_buf *dmabuf, enum dma_data_direction direction)
+int gpu_ion_dma_buf_end_cpu_access(struct dma_buf *dmabuf, enum dma_data_direction direction)
 {
 	struct ion_buffer *buffer = dmabuf->priv;
 
 	mutex_lock(&buffer->lock);
-	ion_buffer_kmap_put(buffer);
+	gpu_ion_buffer_kmap_put(buffer);
 	mutex_unlock(&buffer->lock);
 	return 0;
 }
 
 struct dma_buf_ops dma_buf_ops = {
-	.map_dma_buf = ion_map_dma_buf,
-	.unmap_dma_buf = ion_unmap_dma_buf,
-	.mmap = ion_mmap,
-	.release = ion_dma_buf_release,
-	.begin_cpu_access = ion_dma_buf_begin_cpu_access,
-	.end_cpu_access = ion_dma_buf_end_cpu_access,
-	.vmap = ion_dma_buf_kmap,
-	.vunmap = ion_dma_buf_kunmap
+	.map_dma_buf = gpu_ion_map_dma_buf,
+	.unmap_dma_buf = gpu_ion_unmap_dma_buf,
+	.mmap = gpu_ion_mmap,
+	.release = gpu_ion_dma_buf_release,
+	.begin_cpu_access = gpu_ion_dma_buf_begin_cpu_access,
+	.end_cpu_access = gpu_ion_dma_buf_end_cpu_access,
+	.vmap = gpu_ion_dma_buf_kmap,
+	.vunmap = gpu_ion_dma_buf_kunmap
 
 	// .kmap_atomic = ion_dma_buf_kmap,
 	// .kunmap_atomic = ion_dma_buf_kunmap,
@@ -1358,7 +1358,7 @@ struct dma_buf *ion_share_dma_buf(struct ion_client *client,
 	}
 
 	buffer = handle->buffer;
-	ion_buffer_get(buffer);
+	gpu_ion_buffer_get(buffer);
 	mutex_unlock(&client->lock);
 
 	
@@ -1369,7 +1369,7 @@ struct dma_buf *ion_share_dma_buf(struct ion_client *client,
 
 	dmabuf = dma_buf_export(&exp_info);
 	if (IS_ERR(dmabuf)) {
-		ion_buffer_put(buffer);
+		gpu_ion_buffer_put(buffer);
 		return dmabuf;
 	}
 
@@ -1416,23 +1416,23 @@ struct ion_handle *ion_import_dma_buf(struct ion_client *client, int fd)
 
 	mutex_lock(&client->lock);
 	/* if a handle exists for this buffer just take a reference to it */
-	handle = ion_handle_lookup(client, buffer);
+	handle = gpu_ion_handle_lookup(client, buffer);
 	if (!IS_ERR(handle)) {
-		ion_handle_get(handle);
+		gpu_ion_handle_get(handle);
 		mutex_unlock(&client->lock);
 		goto end;
 	}
 
-	handle = ion_handle_create(client, buffer);
+	handle = gpu_ion_handle_create(client, buffer);
 	if (IS_ERR(handle)) {
 		mutex_unlock(&client->lock);
 		goto end;
 	}
 	
-	ret = ion_handle_add(client, handle);
+	ret = gpu_ion_handle_add(client, handle);
 	mutex_unlock(&client->lock);
 	if (ret) {
-		ion_handle_put(client, handle);
+		gpu_ion_handle_put(client, handle);
 		handle = ERR_PTR(ret);
 	}
 end:
@@ -1441,7 +1441,7 @@ end:
 }
 EXPORT_SYMBOL(ion_import_dma_buf);
 
-static int ion_sync_for_device(struct ion_client *client, int fd)
+static int gpu_ion_sync_for_device(struct ion_client *client, int fd)
 {
 	struct dma_buf *dmabuf;
 	struct ion_buffer *buffer;
@@ -1465,13 +1465,13 @@ static int ion_sync_for_device(struct ion_client *client, int fd)
 		return 0;
 	}
 
-	ion_device_sync(buffer->dev, buffer->sg_table,
+	gpu_ion_device_sync(buffer->dev, buffer->sg_table,
 				DMA_BIDIRECTIONAL, ion_buffer_flush, false);
 	dma_buf_put(dmabuf);
 	return 0;
 }
 
-static long ion_alloc_preload(struct ion_client *client,
+static long gpu_ion_alloc_preload(struct ion_client *client,
 				unsigned int heap_id_mask,
 				unsigned int flags,
 				unsigned int count,
@@ -1522,7 +1522,7 @@ static long ion_alloc_preload(struct ion_client *client,
 	return 0;
 }
 
-static long ion_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
+static long gpu_ion_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 {
 	struct ion_client *client = filp->private_data;
 
@@ -1534,7 +1534,7 @@ static long ion_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 
 		if (copy_from_user(&data, (void __user *)arg, sizeof(data)))
 			return -EFAULT;
-		handle = ion_alloc(client, data.len, data.align,
+		handle = gpu_ion_alloc(client, data.len, data.align,
 					     data.heap_id_mask, data.flags);
 
 		if (IS_ERR(handle))
@@ -1543,7 +1543,7 @@ static long ion_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 		data.handle = (ion_user_handle_t)handle->id;
 
 		if (copy_to_user((void __user *)arg, &data, sizeof(data))) {
-			ion_free(client, handle);
+			gpu_ion_free(client, handle);
 			return -EFAULT;
 		}
 		break;
@@ -1556,7 +1556,7 @@ static long ion_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 		if (copy_from_user(&data, (void __user *)arg,
 				   sizeof(struct ion_handle_data)))
 			return -EFAULT;
-		handle = ion_handle_get_by_id(client, (int)data.handle);
+		handle = gpu_ion_handle_get_by_id(client, (int)data.handle);
 		if (IS_ERR(handle)) {
 			pr_debug("%s: failed to get a valid ion handle "
 					"(pid=%d, uhandle=%d)\n", __func__,
@@ -1564,8 +1564,8 @@ static long ion_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 			return PTR_ERR(handle);
 		}
 
-		ion_free(client, handle);
-		ion_handle_put(client, handle);
+		gpu_ion_free(client, handle);
+		gpu_ion_handle_put(client, handle);
 		break;
 	}
 	case ION_IOC_SHARE:
@@ -1576,11 +1576,11 @@ static long ion_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 
 		if (copy_from_user(&data, (void __user *)arg, sizeof(data)))
 			return -EFAULT;
-		handle = ion_handle_get_by_id(client, (int)data.handle);
+		handle = gpu_ion_handle_get_by_id(client, (int)data.handle);
 		if (IS_ERR(handle))
 			return PTR_ERR(handle);
 		data.fd = ion_share_dma_buf_fd(client, handle);
-		ion_handle_put(client, handle);
+		gpu_ion_handle_put(client, handle);
 		if (copy_to_user((void __user *)arg, &data, sizeof(data)))
 			return -EFAULT;
 		if (data.fd < 0)
@@ -1614,7 +1614,7 @@ static long ion_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 		if (copy_from_user(&data, (void __user *)arg,
 				   sizeof(struct ion_fd_data)))
 			return -EFAULT;
-		ion_sync_for_device(client, data.fd);
+		gpu_ion_sync_for_device(client, data.fd);
 		break;
 	}
 	case ION_IOC_CUSTOM:
@@ -1653,7 +1653,7 @@ static long ion_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 			return -EFAULT;
 		}
 
-		ret = ion_alloc_preload(client, data.heap_id_mask,
+		ret = gpu_ion_alloc_preload(client, data.heap_id_mask,
 					data.flags, data.count, obj);
 		kfree(obj);
 		return ret;
@@ -1664,23 +1664,23 @@ static long ion_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 	return 0;
 }
 
-static int ion_release(struct inode *inode, struct file *file)
+static int gpu_ion_release(struct inode *inode, struct file *file)
 {
 	struct ion_client *client = file->private_data;
 
 	pr_debug("%s: %d\n", __func__, __LINE__);
-	ion_client_destroy(client);
+	gpu_ion_client_destroy(client);
 	return 0;
 }
 
-static int ion_open(struct inode *inode, struct file *file)
+static int gpu_ion_open(struct inode *inode, struct file *file)
 {
 	struct miscdevice *miscdev = file->private_data;
 	struct ion_device *dev = container_of(miscdev, struct ion_device, dev);
 	struct ion_client *client;
 
 	pr_debug("%s: %d\n", __func__, __LINE__);
-	client = ion_client_create(dev, "user");
+	client = gpu_ion_client_create(dev, "user");
 	if (IS_ERR(client))
 		return PTR_ERR(client);
 	file->private_data = client;
@@ -1690,12 +1690,12 @@ static int ion_open(struct inode *inode, struct file *file)
 
 static const struct file_operations ion_fops = {
 	.owner          = THIS_MODULE,
-	.open           = ion_open,
-	.release        = ion_release,
-	.unlocked_ioctl = ion_ioctl,
+	.open           = gpu_ion_open,
+	.release        = gpu_ion_release,
+	.unlocked_ioctl = gpu_ion_ioctl,
 };
 
-static size_t ion_debug_heap_total(struct ion_client *client,
+static size_t gpu_ion_debug_heap_total(struct ion_client *client,
 				   unsigned int id)
 {
 	size_t size = 0;
@@ -1713,7 +1713,7 @@ static size_t ion_debug_heap_total(struct ion_client *client,
 	return size;
 }
 
-static int ion_debug_heap_show(struct seq_file *s, void *unused)
+static int gpu_ion_debug_heap_show(struct seq_file *s, void *unused)
 {
 	struct ion_heap *heap = s->private;
 	struct ion_device *dev = heap->dev;
@@ -1727,7 +1727,7 @@ static int ion_debug_heap_show(struct seq_file *s, void *unused)
 	for (n = rb_first(&dev->clients); n; n = rb_next(n)) {
 		struct ion_client *client = rb_entry(n, struct ion_client,
 						     node);
-		size_t size = ion_debug_heap_total(client, heap->id);
+		size_t size = gpu_ion_debug_heap_total(client, heap->id);
 		if (!size)
 			continue;
 		if (client->task) {
@@ -1774,13 +1774,13 @@ static int ion_debug_heap_show(struct seq_file *s, void *unused)
 	return 0;
 }
 
-static int ion_debug_heap_open(struct inode *inode, struct file *file)
+static int gpu_ion_debug_heap_open(struct inode *inode, struct file *file)
 {
-	return single_open(file, ion_debug_heap_show, inode->i_private);
+	return single_open(file, gpu_ion_debug_heap_show, inode->i_private);
 }
 
 static const struct file_operations debug_heap_fops = {
-	.open = ion_debug_heap_open,
+	.open = gpu_ion_debug_heap_open,
 	.read = seq_read,
 	.llseek = seq_lseek,
 	.release = single_release,
@@ -1824,7 +1824,7 @@ DEFINE_SIMPLE_ATTRIBUTE(debug_shrink_fops, debug_shrink_get,
                         debug_shrink_set, "%llu\n");
 #endif
 
-void ion_device_add_heap(struct ion_device *dev, struct ion_heap *heap)
+void gpu_ion_device_add_heap(struct ion_device *dev, struct ion_heap *heap)
 {
 	if (!heap->ops->allocate || !heap->ops->free || !heap->ops->map_dma ||
 	    !heap->ops->unmap_dma)
@@ -1857,7 +1857,7 @@ void ion_device_add_heap(struct ion_device *dev, struct ion_heap *heap)
 #define VM_PAGE_COUNT_WIDTH 4
 #define VM_PAGE_COUNT 4
 
-static void ion_device_sync_and_unmap(unsigned long vaddr,
+static void gpu_ion_device_sync_and_unmap(unsigned long vaddr,
 					pte_t *ptep, size_t size,
 					enum dma_data_direction dir,
 					ion_device_sync_func sync, bool memzero)
@@ -1871,7 +1871,7 @@ static void ion_device_sync_and_unmap(unsigned long vaddr,
 		sync((void *) vaddr, size, dir);
 }
 
-void ion_device_sync(struct ion_device *dev, struct sg_table *sgt,
+void gpu_ion_device_sync(struct ion_device *dev, struct sg_table *sgt,
 			enum dma_data_direction dir,
 			ion_device_sync_func sync, bool memzero)
 {
@@ -1962,7 +1962,7 @@ void ion_device_sync(struct ion_device *dev, struct sg_table *sgt,
 				(unsigned long) dev->reserved_vm_area->addr
 					+ (SZ_1M * page_idx);
 
-				ion_device_sync_and_unmap(vaddr,
+				gpu_ion_device_sync_and_unmap(vaddr,
 					ptep, sum, dir, sync, memzero);
 				sum = 0;
 			}
@@ -1970,7 +1970,7 @@ void ion_device_sync(struct ion_device *dev, struct sg_table *sgt,
 	}
 
 	if (sum != 0) {
-		ion_device_sync_and_unmap(
+		gpu_ion_device_sync_and_unmap(
 			(unsigned long) dev->reserved_vm_area->addr +
 				(SZ_1M * page_idx),
 			dev->pte[pte_idx], sum, dir, sync, memzero);
@@ -1990,7 +1990,7 @@ void ion_device_sync(struct ion_device *dev, struct sg_table *sgt,
 	up(&dev->vm_sem);
 }
 
-static int ion_device_reserve_vm(struct ion_device *dev)
+static int gpu_ion_device_reserve_vm(struct ion_device *dev)
 {
 	int i;
 
@@ -2018,7 +2018,7 @@ static int ion_device_reserve_vm(struct ion_device *dev)
 }
 
 #ifdef CONFIG_ION_EXYNOS_STAT_LOG
-static void ion_buffer_dump_flags(struct seq_file *s, unsigned long flags)
+static void gpu_ion_buffer_dump_flags(struct seq_file *s, unsigned long flags)
 {
 	if ((flags & ION_FLAG_CACHED) && !(flags & ION_FLAG_CACHED_NEEDS_SYNC))
 		seq_printf(s, "cached|faultmap");
@@ -2039,9 +2039,9 @@ static void ion_buffer_dump_flags(struct seq_file *s, unsigned long flags)
 		seq_printf(s, "|protect");
 }
 
-static struct ion_handle *ion_handle_lookup(struct ion_client *client,
+static struct ion_handle *gpu_ion_handle_lookup(struct ion_client *client,
 					    struct ion_buffer *buffer);
-static void ion_buffer_dump_clients(struct ion_buffer *buffer, char *str)
+static void gpu_ion_buffer_dump_clients(struct ion_buffer *buffer, char *str)
 {
 	struct ion_device *dev = buffer->dev;
 	struct rb_node *n;
@@ -2054,7 +2054,7 @@ static void ion_buffer_dump_clients(struct ion_buffer *buffer, char *str)
 		struct ion_handle *handle;
 
 		mutex_lock(&client->lock);
-		handle = ion_handle_lookup(client, buffer);
+		handle = gpu_ion_handle_lookup(client, buffer);
 		if (!IS_ERR(handle)) {
 			const char *name;
 			size_t len = strlen(client->name);
@@ -2076,7 +2076,7 @@ static void ion_buffer_dump_clients(struct ion_buffer *buffer, char *str)
 	}
 }
 
-static void ion_buffer_dump_tasks(struct ion_buffer *buffer, char *str)
+static void gpu_ion_buffer_dump_tasks(struct ion_buffer *buffer, char *str)
 {
 	struct ion_task *task, *tmp;
 	const char *delim = "|";
@@ -2101,7 +2101,7 @@ static void ion_buffer_dump_tasks(struct ion_buffer *buffer, char *str)
 	}
 }
 
-static int ion_debug_buffer_show(struct seq_file *s, void *unused)
+static int gpu_ion_debug_buffer_show(struct seq_file *s, void *unused)
 {
 	struct ion_device *dev = s->private;
 	struct rb_node *n;
@@ -2124,10 +2124,10 @@ static int ion_debug_buffer_show(struct seq_file *s, void *unused)
 		char client_name[64] = {0, };
 		char master_name[64] = {0, };
 
-		ion_buffer_dump_clients(buffer, client_name);
+		gpu_ion_buffer_dump_clients(buffer, client_name);
 
 		mutex_lock(&buffer->lock);
-		ion_buffer_dump_tasks(buffer, master_name);
+		gpu_ion_buffer_dump_tasks(buffer, master_name);
 		total_size += buffer->size;
 		seq_printf(s, "%20.s %16.s %4u %16.s %4u %10u %4d %3d %6d "
 				"%16.s %16.s %9lx", buffer->heap->name,
@@ -2138,7 +2138,7 @@ static int ion_debug_buffer_show(struct seq_file *s, void *unused)
 				buffer->handle_count, master_name,
 				client_name, buffer->flags);
 		seq_printf(s, "(");
-		ion_buffer_dump_flags(s, buffer->flags);
+		gpu_ion_buffer_dump_flags(s, buffer->flags);
 		if (!strncmp(buffer->heap->name, "exynos_contig_heap", 18))
 			seq_printf(s, "|region%lu",
 				__ffs((buffer->flags & 0xffff0000)) - 16);
@@ -2159,19 +2159,19 @@ static int ion_debug_buffer_show(struct seq_file *s, void *unused)
 	return 0;
 }
 
-static int ion_debug_buffer_open(struct inode *inode, struct file *file)
+static int gpu_ion_debug_buffer_open(struct inode *inode, struct file *file)
 {
-	return single_open(file, ion_debug_buffer_show, inode->i_private);
+	return single_open(file, gpu_ion_debug_buffer_show, inode->i_private);
 }
 
 static const struct file_operations debug_buffer_fops = {
-	.open = ion_debug_buffer_open,
+	.open = gpu_ion_debug_buffer_open,
 	.read = seq_read,
 	.llseek = seq_lseek,
 	.release = single_release,
 };
 
-static void ion_debug_event_show_one(struct seq_file *s,
+static void gpu_ion_debug_event_show_one(struct seq_file *s,
 					struct ion_eventlog *log)
 {
 	struct timeval tv = ktime_to_timeval(log->begin);
@@ -2221,7 +2221,7 @@ static void ion_debug_event_show_one(struct seq_file *s,
 
 	if (log->type == ION_EVENT_TYPE_ALLOC) {
 		seq_printf(s, "  ");
-		ion_buffer_dump_flags(s, log->data.alloc.flags);
+		gpu_ion_buffer_dump_flags(s, log->data.alloc.flags);
 	}
 
 	if (log->type == ION_EVENT_TYPE_FREE && log->data.free.shrinker)
@@ -2230,7 +2230,7 @@ static void ion_debug_event_show_one(struct seq_file *s,
 	seq_printf(s, "\n");
 }
 
-static int ion_debug_event_show(struct seq_file *s, void *unused)
+static int gpu_ion_debug_event_show(struct seq_file *s, void *unused)
 {
 	struct ion_device *dev = s->private;
 	int index = atomic_read(&dev->event_idx) % ION_EVENT_LOG_MAX;
@@ -2245,26 +2245,26 @@ static int ion_debug_event_show(struct seq_file *s, void *unused)
 	do {
 		if (++index >= ION_EVENT_LOG_MAX)
 			index = 0;
-		ion_debug_event_show_one(s, &dev->eventlog[index]);
+		gpu_ion_debug_event_show_one(s, &dev->eventlog[index]);
 	} while (index != last);
 
 	return 0;
 }
 
-static int ion_debug_event_open(struct inode *inode, struct file *file)
+static int gpu_ion_debug_event_open(struct inode *inode, struct file *file)
 {
-	return single_open(file, ion_debug_event_show, inode->i_private);
+	return single_open(file, gpu_ion_debug_event_show, inode->i_private);
 }
 
 static const struct file_operations debug_event_fops = {
-	.open = ion_debug_event_open,
+	.open = gpu_ion_debug_event_open,
 	.read = seq_read,
 	.llseek = seq_lseek,
 	.release = single_release,
 };
 #endif
 
-struct ion_device *ion_device_create(long (*custom_ioctl)
+struct ion_device *gpu_ion_device_create(long (*custom_ioctl)
 				     (struct ion_client *client,
 				      unsigned int cmd,
 				      unsigned long arg))
@@ -2314,7 +2314,7 @@ struct ion_device *ion_device_create(long (*custom_ioctl)
 	plist_head_init(&idev->heaps);
 	idev->clients = RB_ROOT;
 
-	ret = ion_device_reserve_vm(idev);
+	ret = gpu_ion_device_reserve_vm(idev);
 	if (ret)
 		panic("ion: failed to reserve vm area\n");
 
@@ -2324,7 +2324,7 @@ struct ion_device *ion_device_create(long (*custom_ioctl)
 	return idev;
 }
 
-void ion_device_destroy(struct ion_device *dev)
+void gpu_ion_device_destroy(struct ion_device *dev)
 {
 	misc_deregister(&dev->dev);
 	/* XXX need to free the heaps and clients ? */
@@ -2332,7 +2332,7 @@ void ion_device_destroy(struct ion_device *dev)
 	kfree(dev);
 }
 
-void __init ion_reserve(struct ion_platform_data *data)
+void __init gpu_ion_reserve(struct ion_platform_data *data)
 {
 	int i;
 
@@ -2367,7 +2367,7 @@ void __init ion_reserve(struct ion_platform_data *data)
 	}
 }
 
-static struct ion_iovm_map *ion_buffer_iova_create(struct ion_buffer *buffer,
+static struct ion_iovm_map *gpu_ion_buffer_iova_create(struct ion_buffer *buffer,
 			struct device *dev, enum dma_data_direction dir, int id)
 {
 	/* Must be called under buffer->lock held */
@@ -2412,7 +2412,7 @@ static struct ion_iovm_map *ion_buffer_iova_create(struct ion_buffer *buffer,
 	return iovm_map;
 }
 
-dma_addr_t ion_iovmm_map(struct dma_buf_attachment *attachment,
+dma_addr_t gpu_ion_iovmm_map(struct dma_buf_attachment *attachment,
 			 off_t offset, size_t size,
 			 enum dma_data_direction direction, int id)
 {
@@ -2432,7 +2432,7 @@ dma_addr_t ion_iovmm_map(struct dma_buf_attachment *attachment,
 		}
 	}
 
-	iovm_map = ion_buffer_iova_create(buffer, attachment->dev, direction, id);
+	iovm_map = gpu_ion_buffer_iova_create(buffer, attachment->dev, direction, id);
 	if (IS_ERR(iovm_map)) {
 		mutex_unlock(&buffer->lock);
 		return PTR_ERR(iovm_map);
@@ -2444,7 +2444,7 @@ dma_addr_t ion_iovmm_map(struct dma_buf_attachment *attachment,
 	return iovm_map->iova;
 }
 
-void ion_iovmm_unmap(struct dma_buf_attachment *attachment, dma_addr_t iova)
+void gpu_ion_iovmm_unmap(struct dma_buf_attachment *attachment, dma_addr_t iova)
 {
 	struct ion_iovm_map *this_map = NULL;
 	struct ion_iovm_map *iovm_map;

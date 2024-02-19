@@ -77,6 +77,12 @@ static struct cpumask mp_cluster_cpus[CA_END];
 static unsigned int swtrip_counter = 0;
 #endif
 
+enum cpufreq_cooling_property {
+	GET_LEVEL,
+	GET_FREQ,
+	GET_MAXL,
+};
+
 static bool is_tmu_probed;
 
 extern int gpu_is_power_on(void);
@@ -286,76 +292,76 @@ static int exynos_get_crit_temp(struct thermal_zone_device *thermal,
  *
  * Return: 0 on success, -EINVAL when invalid parameters are passed.
  */
-static int get_property(unsigned int cpu, unsigned long input,
-			unsigned int *output,
-			enum cpufreq_cooling_property property)
-{
-	int i, j;
-	unsigned long max_level = 0, level = 0;
-	unsigned int freq = CPUFREQ_ENTRY_INVALID;
-	int descend = -1;
-	struct cpufreq_frequency_table *table =
-					cpufreq_frequency_get_table(cpu);
+// static int get_property(unsigned int cpu, unsigned long input,
+// 			unsigned int *output,
+// 			enum cpufreq_cooling_property property)
+// {
+// 	int i, j;
+// 	unsigned long max_level = 0, level = 0;
+// 	unsigned int freq = CPUFREQ_ENTRY_INVALID;
+// 	int descend = -1;
+// 	struct cpufreq_frequency_table *table =
+// 					cpufreq_frequency_get_table(cpu);
 
-	if (!output)
-		return -EINVAL;
+// 	if (!output)
+// 		return -EINVAL;
 
-	if (!table)
-		return -EINVAL;
+// 	if (!table)
+// 		return -EINVAL;
 
-	for (i = 0; table[i].frequency != CPUFREQ_TABLE_END; i++) {
-		/* ignore invalid entries */
-		if (table[i].frequency == CPUFREQ_ENTRY_INVALID)
-			continue;
+// 	for (i = 0; table[i].frequency != CPUFREQ_TABLE_END; i++) {
+// 		/* ignore invalid entries */
+// 		if (table[i].frequency == CPUFREQ_ENTRY_INVALID)
+// 			continue;
 
-		/* ignore duplicate entry */
-		if (freq == table[i].frequency)
-			continue;
+// 		/* ignore duplicate entry */
+// 		if (freq == table[i].frequency)
+// 			continue;
 
-		/* get the frequency order */
-		if (freq != CPUFREQ_ENTRY_INVALID && descend == -1)
-			descend = !!(freq > table[i].frequency);
+// 		/* get the frequency order */
+// 		if (freq != CPUFREQ_ENTRY_INVALID && descend == -1)
+// 			descend = !!(freq > table[i].frequency);
 
-		freq = table[i].frequency;
-		max_level++;
-	}
+// 		freq = table[i].frequency;
+// 		max_level++;
+// 	}
 
-	/* get max level */
-	if (property == GET_MAXL) {
-		*output = (unsigned int)max_level;
-		return 0;
-	}
+// 	/* get max level */
+// 	if (property == GET_MAXL) {
+// 		*output = (unsigned int)max_level;
+// 		return 0;
+// 	}
 
-	if (property == GET_FREQ)
-		level = descend ? input : (max_level - input - 1);
+// 	if (property == GET_FREQ)
+// 		level = descend ? input : (max_level - input - 1);
 
-	for (i = 0, j = 0; table[i].frequency != CPUFREQ_TABLE_END; i++) {
-		/* ignore invalid entry */
-		if (table[i].frequency == CPUFREQ_ENTRY_INVALID)
-			continue;
+// 	for (i = 0, j = 0; table[i].frequency != CPUFREQ_TABLE_END; i++) {
+// 		/* ignore invalid entry */
+// 		if (table[i].frequency == CPUFREQ_ENTRY_INVALID)
+// 			continue;
 
-		/* ignore duplicate entry */
-		if (freq == table[i].frequency)
-			continue;
+// 		/* ignore duplicate entry */
+// 		if (freq == table[i].frequency)
+// 			continue;
 
-		/* now we have a valid frequency entry */
-		freq = table[i].frequency;
+// 		/* now we have a valid frequency entry */
+// 		freq = table[i].frequency;
 
-		if (property == GET_LEVEL && (unsigned int)input == freq) {
-			/* get level by frequency */
-			*output = descend ? j : (max_level - j - 1);
-			return 0;
-		}
-		if (property == GET_FREQ && level == j) {
-			/* get frequency by level */
-			*output = freq;
-			return 0;
-		}
-		j++;
-	}
+// 		if (property == GET_LEVEL && (unsigned int)input == freq) {
+// 			/* get level by frequency */
+// 			*output = descend ? j : (max_level - j - 1);
+// 			return 0;
+// 		}
+// 		if (property == GET_FREQ && level == j) {
+// 			/* get frequency by level */
+// 			*output = freq;
+// 			return 0;
+// 		}
+// 		j++;
+// 	}
 
-	return -EINVAL;
-}
+// 	return -EINVAL;
+// }
 
 /**
  * cpufreq_cooling_get_level - for a give cpu, return the cooling level.
@@ -368,14 +374,16 @@ static int get_property(unsigned int cpu, unsigned long input,
  * Return: The matched cooling level on success or THERMAL_CSTATE_INVALID
  * otherwise.
  */
-unsigned long cpufreq_cooling_get_level(unsigned int cpu, unsigned int freq)
+unsigned int cpufreq_cooling_get_level(unsigned int cpu, unsigned int freq)
 {
-	unsigned int val;
+	// unsigned int val;
 
-	if (get_property(cpu, (unsigned long)freq, &val, GET_LEVEL))
-		return THERMAL_CSTATE_INVALID;
+    return cpufreq_get(cpu);
 
-	return (unsigned long)val;
+	// if (get_property(cpu, (unsigned long)freq, &val, GET_LEVEL))
+	// 	return THERMAL_CSTATE_INVALID;
+
+	// return (unsigned long)val;
 }
 
 /* Bind callback functions for thermal zone */

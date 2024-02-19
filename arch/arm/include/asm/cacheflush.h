@@ -142,6 +142,17 @@ extern struct cpu_cache_fns cpu_cache;
  */
 #define dmac_flush_range		cpu_cache.dma_flush_range
 
+// ijh resurrecting theses since the mali gpu code requires
+/*
+ * These are private to the dma-mapping API.  Do not use directly.
+ * Their sole purpose is to ensure that data held in the cache
+ * is visible to DMA, or data written by DMA to system memory is
+ * visible to the CPU.
+ */
+#define dmac_map_area			cpu_cache.dma_map_area
+#define dmac_unmap_area			cpu_cache.dma_unmap_area
+#define dmac_flush_range		cpu_cache.dma_flush_range
+
 #else
 
 extern void __cpuc_flush_icache_all(void);
@@ -160,6 +171,18 @@ extern void __cpuc_flush_dcache_area(void *, size_t);
  * visible to the CPU.
  */
 extern void dmac_flush_range(const void *, const void *);
+
+// ijh resurrecting these since the mali gpu code requires
+/*
+ * These are private to the dma-mapping API.  Do not use directly.
+ * Their sole purpose is to ensure that data held in the cache
+ * is visible to DMA, or data written by DMA to system memory is
+ * visible to the CPU.
+ */
+extern void dmac_map_area(const void *, size_t, int);
+extern void dmac_unmap_area(const void *, size_t, int);
+extern void dmac_flush_range(const void *, const void *);
+
 
 #endif
 

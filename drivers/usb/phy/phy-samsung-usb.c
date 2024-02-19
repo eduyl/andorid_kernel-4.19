@@ -289,20 +289,44 @@ int samsung_usbphy_get_refclk_freq(struct samsung_usbphy *sphy)
 	return refclk_freq;
 }
 EXPORT_SYMBOL_GPL(samsung_usbphy_get_refclk_freq);
-
+//TODO: ijh Check validity of this code
 int samsung_usbphy_check_op(void)
 {
-	int op;
+	int ret;
+	int flags;
 
-	op = usb_phy_check_op();
-	/* REVISIT: this also can be done by cpuidle code */
-	if (!op) {
-		/* System is going to enter LPA, so notify all subscribers */
-		raw_notifier_call_chain(&usb_lpa_nh,
-				USB_LPA_PREPARE, NULL);
+	struct usb_phy *usb2_phy = usb_get_phy(USB_PHY_TYPE_USB2);
+	struct usb_phy *usb3_phy = usb_get_phy(USB_PHY_TYPE_USB3);
+
+	if (usb2_phy)
+	{
+		struct samsung_usbphy *sphy = phy_to_sphy(usb2_phy);
+		spin_lock_irqsave(&sphy->lock, flags);
+
+		if (!sphy->usage_count || pm_runtime_suspended(sphy->dev))
+			ret = false;
+		else
+			ret = true;
+
+		spin_unlock_irqrestore(&sphy->lock, flags);
+
+		if (ret)
+			return ret;
 	}
 
-	return op;
+	if (usb3_phy)
+	{
+		struct samsung_usbphy *sphy = phy_to_sphy(usb3_phy);
+		ret = sphy->usage_count > 0;
+	}
+
+	if (ret)
+		return ret;
+
+	/* System is going to enter LPA, so notify all subscribers */
+	raw_notifier_call_chain(&usb_lpa_nh, USB_LPA_PREPARE, NULL);
+
+	return 0;
 }
 EXPORT_SYMBOL_GPL(samsung_usbphy_check_op);
 

@@ -370,11 +370,11 @@ static int exynos_check_enter_mode(void)
 	if (exynos_check_reg_status(exynos5_clock_gating,
 			    ARRAY_SIZE(exynos5_clock_gating)))
 		return EXYNOS_CHECK_DIDLE;
-
-#if defined(CONFIG_MMC_DW)
-	if (dw_mci_exynos_request_status())
-		return EXYNOS_CHECK_DIDLE;
-#endif
+//TODO: ijh this might need reinstating
+// #if defined(CONFIG_MMC_DW)
+// 	if (dw_mci_exynos_request_status())
+// 		return EXYNOS_CHECK_DIDLE;
+// #endif
 
 #ifdef CONFIG_EXYNOS_MIPI_LLI
 	if (mipi_lli_get_link_status())

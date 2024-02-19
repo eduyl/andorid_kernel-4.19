@@ -114,10 +114,10 @@ void *ion_carveout_heap_map_kernel(struct ion_heap *heap,
 				   struct ion_buffer *buffer)
 {
 	void *ret;
-	int mtype = MT_MEMORY_NONCACHED;
+	int mtype = MT_MEMORY_RWX_NONCACHED;
 
 	if (buffer->flags & ION_FLAG_CACHED)
-		mtype = MT_MEMORY;
+		mtype = MT_MEMORY_RWX;
 
 	ret = __arm_ioremap(buffer->priv_phys, buffer->size,
 			      mtype);

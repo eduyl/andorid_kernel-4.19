@@ -208,7 +208,7 @@ static int ion_system_heap_allocate(struct ion_heap *heap,
 	}
 
 	if (ion_buffer_sync_force(buffer))
-		ion_device_sync(heap->dev, table,
+		gpu_ion_device_sync(heap->dev, table,
 				DMA_BIDIRECTIONAL, ion_buffer_flush, true);
 
 	if (all_pages_from_pool || ion_buffer_sync_force(buffer))
@@ -241,7 +241,7 @@ void ion_system_heap_free(struct ion_buffer *buffer) {
 	/* pages come from the page pools, zero them before returning
 	   for security purposes (other allocations are zerod at alloc time */
 	if (!ion_buffer_fault_user_mappings(buffer))
-		ion_heap_buffer_zero(buffer);
+		gpu_ion_heap_buffer_zero(buffer);
 
 	for_each_sg(table->sgl, sg, table->nents, i)
 		free_buffer_page(sys_heap, buffer, sg_page(sg),
@@ -428,9 +428,9 @@ static struct ion_heap_ops system_heap_ops = {
 	.free = ion_system_heap_free,
 	.map_dma = ion_system_heap_map_dma,
 	.unmap_dma = ion_system_heap_unmap_dma,
-	.map_kernel = ion_heap_map_kernel,
-	.unmap_kernel = ion_heap_unmap_kernel,
-	.map_user = ion_heap_map_user,
+	.map_kernel = gpu_ion_heap_map_kernel,
+	.unmap_kernel = gpu_ion_heap_unmap_kernel,
+	.map_user = gpu_ion_heap_map_user,
 	.preload = ion_system_heap_preload_allocate,
 };
 
@@ -460,7 +460,7 @@ static int ion_system_heap_shrink(struct shrinker *shrinker,
 		struct ion_page_pool *pool = sys_heap->pools[i];
 		nr_total += ion_page_pool_shrink(pool, gfp_mask, 0);
 	}
-	nr_freelist = ion_heap_freelist_size(heap) / PAGE_SIZE;
+	nr_freelist = gpu_ion_heap_freelist_size(heap) / PAGE_SIZE;
 	nr_total += nr_freelist;
 
 	if ((sc->nr_to_scan == 0) || !nr_total)
@@ -517,7 +517,7 @@ end:
 		struct ion_page_pool *pool = sys_heap->pools[i];
 		nr_total += ion_page_pool_shrink(pool, gfp_mask, 0);
 	}
-	nr_total += ion_heap_freelist_size(heap) / PAGE_SIZE;
+	nr_total += gpu_ion_heap_freelist_size(heap) / PAGE_SIZE;
 	return nr_total;
 
 }
@@ -577,7 +577,7 @@ static unsigned long ion_shrink_count(struct shrinker *shrink, struct shrink_con
 		struct ion_page_pool *pool = sys_heap->pools[i];
 		nr_total += ion_page_pool_shrink(pool, gfp_mask, 0);
 	}
-	nr_total += ion_heap_freelist_size(heap) / PAGE_SIZE;
+	nr_total += gpu_ion_heap_freelist_size(heap) / PAGE_SIZE;
 	return nr_total;
 }
 
@@ -715,8 +715,8 @@ static struct ion_heap_ops kmalloc_ops = {
 	.phys = ion_system_contig_heap_phys,
 	.map_dma = ion_system_contig_heap_map_dma,
 	.unmap_dma = ion_system_contig_heap_unmap_dma,
-	.map_kernel = ion_heap_map_kernel,
-	.unmap_kernel = ion_heap_unmap_kernel,
+	.map_kernel = gpu_ion_heap_map_kernel,
+	.unmap_kernel = gpu_ion_heap_unmap_kernel,
 	.map_user = ion_system_contig_heap_map_user,
 };
 

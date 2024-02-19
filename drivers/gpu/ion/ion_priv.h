@@ -30,7 +30,7 @@
 #include <linux/dma-direction.h>
 #include <asm/cacheflush.h>
 
-struct ion_buffer *ion_handle_buffer(struct ion_handle *handle);
+struct ion_buffer *gpu_ion_handle_buffer(struct ion_handle *handle);
 
 struct ion_iovm_map {
 	struct list_head list;
@@ -260,7 +260,7 @@ static inline bool ion_buffer_need_flush_all(struct ion_buffer *buffer)
  *
  * returns a valid device or -PTR_ERR
  */
-struct ion_device *ion_device_create(long (*custom_ioctl)
+struct ion_device *gpu_ion_device_create(long (*custom_ioctl)
 				     (struct ion_client *client,
 				      unsigned int cmd,
 				      unsigned long arg));
@@ -269,8 +269,8 @@ struct ion_device *ion_device_create(long (*custom_ioctl)
  * ion_device_destroy - free and device and it's resource
  * @dev:		the device
  */
-void ion_device_destroy(struct ion_device *dev);
-
+void gpu_ion_device_destroy(struct ion_device *dev);
+void gpu_ion_free(struct ion_client *client, struct ion_handle *handle);
 /**
  * ion_device_add_heap - adds a heap to the ion device
  * @dev:		the device
@@ -282,11 +282,11 @@ void ion_device_add_heap(struct ion_device *dev, struct ion_heap *heap);
  * some helpers for common operations on buffers using the sg_table
  * and vaddr fields
  */
-void *ion_heap_map_kernel(struct ion_heap *, struct ion_buffer *);
-void ion_heap_unmap_kernel(struct ion_heap *, struct ion_buffer *);
-int ion_heap_map_user(struct ion_heap *, struct ion_buffer *,
+void *gpu_ion_heap_map_kernel(struct ion_heap *, struct ion_buffer *);
+void gpu_ion_heap_unmap_kernel(struct ion_heap *, struct ion_buffer *);
+int gpu_ion_heap_map_user(struct ion_heap *, struct ion_buffer *,
 			struct vm_area_struct *);
-int ion_heap_buffer_zero(struct ion_buffer *buffer);
+int gpu_ion_heap_buffer_zero(struct ion_buffer *buffer);
 
 /**
  * ion_heap_alloc_pages - allocate pages from alloc_pages
@@ -312,13 +312,13 @@ struct page *ion_heap_alloc_pages(struct ion_buffer *buffer, gfp_t gfp_flags,
 int ion_heap_init_deferred_free(struct ion_heap *heap);
 
 /**
- * ion_heap_freelist_add - add a buffer to the deferred free list
+ * gpu_ion_heap_freelist_add - add a buffer to the deferred free list
  * @heap:		the heap
  * @buffer: 		the buffer
  *
  * Adds an item to the deferred freelist.
  */
-void ion_heap_freelist_add(struct ion_heap *heap, struct ion_buffer *buffer);
+void gpu_ion_heap_freelist_add(struct ion_heap *heap, struct ion_buffer *buffer);
 
 /**
  * ion_heap_freelist_drain - drain the deferred free list
@@ -333,10 +333,10 @@ void ion_heap_freelist_add(struct ion_heap *heap, struct ion_buffer *buffer);
 size_t ion_heap_freelist_drain(struct ion_heap *heap, size_t size);
 
 /**
- * ion_heap_freelist_size - returns the size of the freelist in bytes
+ * gpu_ion_heap_freelist_size - returns the size of the freelist in bytes
  * @heap:		the heap
  */
-size_t ion_heap_freelist_size(struct ion_heap *heap);
+size_t gpu_ion_heap_freelist_size(struct ion_heap *heap);
 
 
 /**
@@ -362,7 +362,7 @@ struct ion_heap *ion_cma_heap_create(struct ion_platform_heap *);
 void ion_cma_heap_destroy(struct ion_heap *);
 
 typedef void (*ion_device_sync_func)(const void *, size_t, int);
-void ion_device_sync(struct ion_device *dev, struct sg_table *sgt,
+void gpu_ion_device_sync(struct ion_device *dev, struct sg_table *sgt,
 			enum dma_data_direction dir,
 			ion_device_sync_func sync, bool memzero);
 
@@ -374,7 +374,7 @@ static inline void ion_buffer_flush(const void *vaddr, size_t size, int dir)
 static inline void ion_buffer_make_ready(struct ion_buffer *buffer)
 {
 	if (!(buffer->flags & ION_FLAG_READY_TO_USE)) {
-		ion_device_sync(buffer->dev, buffer->sg_table, DMA_BIDIRECTIONAL,
+		gpu_ion_device_sync(buffer->dev, buffer->sg_table, DMA_BIDIRECTIONAL,
 			(ion_buffer_cached(buffer) &&
 			 !ion_buffer_fault_user_mappings(buffer)) ? NULL : ion_buffer_flush,
 			!(buffer->flags & ION_FLAG_NOZEROED));

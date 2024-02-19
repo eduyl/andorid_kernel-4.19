@@ -13,6 +13,10 @@
 #include <linux/sec_batt.h>
 #include <linux/power/sec_battery.h>
 
+unsigned int lpcharge;
+EXPORT_SYMBOL(lpcharge);
+int fg_reset;
+EXPORT_SYMBOL(fg_reset);
 
 bool slate_mode_state;
 static struct device_attribute sec_battery_attrs[] = {

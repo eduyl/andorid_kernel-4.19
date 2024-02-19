@@ -27,7 +27,7 @@
 
 #include "ion_priv.h"
 
-void *ion_heap_map_kernel(struct ion_heap *heap,
+void *gpu_ion_heap_map_kernel(struct ion_heap *heap,
 			  struct ion_buffer *buffer)
 {
 	struct scatterlist *sg;
@@ -64,13 +64,13 @@ void *ion_heap_map_kernel(struct ion_heap *heap,
 	return vaddr;
 }
 
-void ion_heap_unmap_kernel(struct ion_heap *heap,
+void gpu_ion_heap_unmap_kernel(struct ion_heap *heap,
 			   struct ion_buffer *buffer)
 {
 	vunmap(buffer->vaddr);
 }
 
-int ion_heap_map_user(struct ion_heap *heap, struct ion_buffer *buffer,
+int gpu_ion_heap_map_user(struct ion_heap *heap, struct ion_buffer *buffer,
 		      struct vm_area_struct *vma)
 {
 	struct sg_table *table = buffer->sg_table;
@@ -110,7 +110,7 @@ int ion_heap_map_user(struct ion_heap *heap, struct ion_buffer *buffer,
 	return 0;
 }
 
-int ion_heap_buffer_zero(struct ion_buffer *buffer)
+int gpu_ion_heap_buffer_zero(struct ion_buffer *buffer)
 {
 	struct sg_table *table = buffer->sg_table;
 	pgprot_t pgprot;
@@ -174,7 +174,7 @@ void ion_heap_free_pages(struct ion_buffer *buffer, struct page *page,
 		__free_page(page + i);
 }
 
-void ion_heap_freelist_add(struct ion_heap *heap, struct ion_buffer * buffer)
+void gpu_ion_heap_freelist_add(struct ion_heap *heap, struct ion_buffer * buffer)
 {
 	spin_lock(&heap->free_lock);
 	list_add(&buffer->list, &heap->free_list);
@@ -183,7 +183,7 @@ void ion_heap_freelist_add(struct ion_heap *heap, struct ion_buffer * buffer)
 	wake_up(&heap->waitqueue);
 }
 
-size_t ion_heap_freelist_size(struct ion_heap *heap)
+size_t gpu_ion_heap_freelist_size(struct ion_heap *heap)
 {
 	size_t size;
 
@@ -194,37 +194,37 @@ size_t ion_heap_freelist_size(struct ion_heap *heap)
 	return size;
 }
 
-size_t ion_heap_freelist_drain(struct ion_heap *heap, size_t size)
-{
-	struct ion_buffer *buffer;
-	size_t total_drained = 0;
-	bool by_shrinker = (size != 0);
+// size_t ion_heap_freelist_drain(struct ion_heap *heap, size_t size)
+// {
+// 	struct ion_buffer *buffer;
+// 	size_t total_drained = 0;
+// 	bool by_shrinker = (size != 0);
 
-	if (ion_heap_freelist_size(heap) == 0)
-		return 0;
+// 	if (gpu_ion_heap_freelist_size(heap) == 0)
+// 		return 0;
 
-	spin_lock(&heap->free_lock);
-	if (size == 0)
-		size = heap->free_list_size;
+// 	spin_lock(&heap->free_lock);
+// 	if (size == 0)
+// 		size = heap->free_list_size;
 
-	while (!list_empty(&heap->free_list)) {
-		if (total_drained >= size)
-			break;
-		buffer = list_first_entry(&heap->free_list, struct ion_buffer,
-					  list);
-		list_del(&buffer->list);
-		heap->free_list_size -= buffer->size;
-		total_drained += buffer->size;
-		spin_unlock(&heap->free_lock);
-		if (by_shrinker)
-			buffer->flags |= ION_FLAG_SHRINKER_FREE;
-		ion_buffer_destroy(buffer);
-		spin_lock(&heap->free_lock);
-	}
-	spin_unlock(&heap->free_lock);
+// 	while (!list_empty(&heap->free_list)) {
+// 		if (total_drained >= size)
+// 			break;
+// 		buffer = list_first_entry(&heap->free_list, struct ion_buffer,
+// 					  list);
+// 		list_del(&buffer->list);
+// 		heap->free_list_size -= buffer->size;
+// 		total_drained += buffer->size;
+// 		spin_unlock(&heap->free_lock);
+// 		if (by_shrinker)
+// 			buffer->flags |= ION_FLAG_SHRINKER_FREE;
+// 		ion_buffer_destroy(buffer);
+// 		spin_lock(&heap->free_lock);
+// 	}
+// 	spin_unlock(&heap->free_lock);
 
-	return total_drained;
-}
+// 	return total_drained;
+// }
 
 int ion_heap_deferred_free(void *data)
 {
@@ -234,7 +234,7 @@ int ion_heap_deferred_free(void *data)
 		struct ion_buffer *buffer;
 
 		wait_event_freezable(heap->waitqueue,
-				     ion_heap_freelist_size(heap) > 0);
+				     gpu_ion_heap_freelist_size(heap) > 0);
 
 		spin_lock(&heap->free_lock);
 		if (list_empty(&heap->free_list)) {
@@ -252,24 +252,24 @@ int ion_heap_deferred_free(void *data)
 	return 0;
 }
 
-int ion_heap_init_deferred_free(struct ion_heap *heap)
-{
-	struct sched_param param = { .sched_priority = 0 };
+// int ion_heap_init_deferred_free(struct ion_heap *heap)
+// {
+// 	struct sched_param param = { .sched_priority = 0 };
 
-	INIT_LIST_HEAD(&heap->free_list);
-	heap->free_list_size = 0;
-	spin_lock_init(&heap->free_lock);
-	init_waitqueue_head(&heap->waitqueue);
-	heap->task = kthread_run(ion_heap_deferred_free, heap,
-				 "%s", heap->name);
-	sched_setscheduler(heap->task, SCHED_IDLE, &param);
-	if (IS_ERR(heap->task)) {
-		pr_err("%s: creating thread for deferred free failed\n",
-		       __func__);
-		return PTR_RET(heap->task);
-	}
-	return 0;
-}
+// 	INIT_LIST_HEAD(&heap->free_list);
+// 	heap->free_list_size = 0;
+// 	spin_lock_init(&heap->free_lock);
+// 	init_waitqueue_head(&heap->waitqueue);
+// 	heap->task = kthread_run(ion_heap_deferred_free, heap,
+// 				 "%s", heap->name);
+// 	sched_setscheduler(heap->task, SCHED_IDLE, &param);
+// 	if (IS_ERR(heap->task)) {
+// 		pr_err("%s: creating thread for deferred free failed\n",
+// 		       __func__);
+// 		return PTR_RET(heap->task);
+// 	}
+// 	return 0;
+// }
 
 struct ion_heap *ion_heap_create(struct ion_platform_heap *heap_data)
 {

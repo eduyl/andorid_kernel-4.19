@@ -76,12 +76,12 @@ static const char name_exynos5430[] = "EXYNOS5430";
 static const char name_exynos5433[] = "EXYNOS5433";
 static const char name_exynos5440[] = "EXYNOS5440";
 
-static void exynos4_map_io(void);
+// static void exynos4_map_io(void);
 static void exynos5_map_io(void);
 static void exynos5430_map_io(void);
 static void exynos5433_map_io(void);
 static void exynos5440_map_io(void);
-static void exynos4_init_uarts(struct s3c2410_uartcfg *cfg, int no);
+// static void exynos4_init_uarts(struct s3c2410_uartcfg *cfg, int no);
 static int exynos_init(void);
 
 unsigned long xxti_f = 0, xusbxti_f = 0;
@@ -1180,7 +1180,7 @@ void __init exynos_init_time(void)
 	if (of_have_populated_dt()) {
 #ifdef CONFIG_OF
 		of_clk_init(NULL);
-		clocksource_of_init();
+		// clocksource_of_init(); TODO: ijh did this do anything in old kernel?
 #endif
 	} else {
 		/* todo: remove after migrating legacy E4 platforms to dt */
@@ -1325,16 +1325,16 @@ static int __init exynos_init(void)
 
 /* uart registration process */
 
-static void __init exynos4_init_uarts(struct s3c2410_uartcfg *cfg, int no)
-{
-	struct s3c2410_uartcfg *tcfg = cfg;
-	u32 ucnt;
+// static void __init exynos4_init_uarts(struct s3c2410_uartcfg *cfg, int no)
+// {
+// 	struct s3c2410_uartcfg *tcfg = cfg;
+// 	u32 ucnt;
 
-	for (ucnt = 0; ucnt < no; ucnt++, tcfg++)
-		tcfg->has_fracval = 1;
+// 	for (ucnt = 0; ucnt < no; ucnt++, tcfg++)
+// 		tcfg->has_fracval = 1;
 
-	s3c24xx_init_uartdevs("exynos4210-uart", exynos4_uart_resources, cfg, no);
-}
+// 	s3c24xx_init_uartdevs("exynos4210-uart", exynos4_uart_resources, cfg, no);
+// }
 
 void __iomem *exynos_eint_base;
 
@@ -1550,19 +1550,19 @@ static inline void exynos_irq_demux_eint(unsigned int start)
 	}
 }
 
-static void exynos_irq_demux_eint16_31(unsigned int irq, struct irq_desc *desc)
+static void exynos_irq_demux_eint16_31(struct irq_desc *desc)
 {
-	struct irq_chip *chip = irq_get_chip(irq);
+	struct irq_chip *chip = irq_get_chip(desc->parent_irq); // TODO: Is parent_irq the right irq ?
 	chained_irq_enter(chip, desc);
 	exynos_irq_demux_eint(IRQ_EINT(16));
 	exynos_irq_demux_eint(IRQ_EINT(24));
 	chained_irq_exit(chip, desc);
 }
 
-static void exynos_irq_eint0_15(unsigned int irq, struct irq_desc *desc)
+static void exynos_irq_eint0_15(struct irq_desc *desc)
 {
-	u32 *irq_data = irq_get_handler_data(irq);
-	struct irq_chip *chip = irq_get_chip(irq);
+	u32 *irq_data = irq_get_handler_data(desc->parent_irq); //TODO : Is parent_irq the right irq ?
+	struct irq_chip *chip = irq_get_chip(desc->parent_irq);
 
 	chained_irq_enter(chip, desc);
 	generic_handle_irq(*irq_data);

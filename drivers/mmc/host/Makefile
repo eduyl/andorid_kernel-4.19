@@ -2,6 +2,7 @@
 #
 # Makefile for MMC/SD host controller drivers
 #
+ccflags-y += -I$(srctree)/arch/arm/plat-samsung/include -I$(srctree)/arch/arm/mach-exynos/include -I$(srctree)/drivers/soc/samsung/include
 
 obj-$(CONFIG_MMC_ARMMMCI) += armmmci.o
 armmmci-y := mmci.o

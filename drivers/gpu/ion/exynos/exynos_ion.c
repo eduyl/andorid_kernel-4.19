@@ -699,7 +699,7 @@ static int ion_exynos_contig_heap_allocate(struct ion_heap *heap,
 #endif
 
 	buffer->priv_virt = dma_alloc_from_contiguous(dev, len >> PAGE_SHIFT,
-					      get_order(align));
+					      get_order(align), true);
 	if (buffer->priv_virt == NULL) {
 		struct cma_info info;
 		pr_err("%s: Failed to allocate %#lx from '%s'\n",
@@ -992,7 +992,7 @@ void exynos_ion_sync_dmabuf_for_device(struct device *dev,
 	else if (!IS_ERR_OR_NULL(buffer->vaddr))
 		dmac_map_area(buffer->vaddr, size, dir);
 	else
-		ion_device_sync(buffer->dev, buffer->sg_table,
+		gpu_ion_device_sync(buffer->dev, buffer->sg_table,
 					dir, dmac_map_area, false);
 
 	mutex_unlock(&buffer->lock);
@@ -1031,7 +1031,7 @@ void exynos_ion_sync_sg_for_device(struct device *dev, size_t size,
 	if (size >= ION_FLUSH_ALL_HIGHLIMIT)
 		flush_all_cpu_caches();
 	else
-		ion_device_sync(ion_exynos, sgt,
+		gpu_ion_device_sync(ion_exynos, sgt,
 					dir, dmac_map_area, false);
 }
 EXPORT_SYMBOL(exynos_ion_sync_sg_for_device);
@@ -1063,7 +1063,7 @@ void exynos_ion_sync_dmabuf_for_cpu(struct device *dev,
 	else if (!IS_ERR_OR_NULL(buffer->vaddr))
 		dmac_unmap_area(buffer->vaddr, size, dir);
 	else
-		ion_device_sync(buffer->dev, buffer->sg_table,
+		gpu_ion_device_sync(buffer->dev, buffer->sg_table,
 					dir, dmac_unmap_area, false);
 
 	mutex_unlock(&buffer->lock);
@@ -1102,7 +1102,7 @@ void exynos_ion_sync_sg_for_cpu(struct device *dev, size_t size,
 	if (size >= ION_FLUSH_ALL_HIGHLIMIT)
 		flush_all_cpu_caches();
 	else
-		ion_device_sync(ion_exynos, sgt,
+		gpu_ion_device_sync(ion_exynos, sgt,
 					dir, ion_buffer_flush, false);
 }
 EXPORT_SYMBOL(exynos_ion_sync_sg_for_cpu);
@@ -1216,7 +1216,7 @@ static long exynos_ion_sync_fd(struct ion_client *client, int fd,
 		return PTR_ERR(handle);
 	}
 
-	buffer = ion_handle_buffer(handle);
+	buffer = gpu_ion_handle_buffer(handle);
 	if (!ion_buffer_cached(buffer)
 			|| ion_buffer_fault_user_mappings(buffer))
 		goto no_sync;
@@ -1261,7 +1261,7 @@ err_dmabuf_file:
 err_vma:
 	up_read(&mm->mmap_sem);
 no_sync:
-	ion_free(client, handle);
+	gpu_ion_free(client, handle);
 	return ret;
 }
 
@@ -1293,7 +1293,7 @@ static long exynos_ion_ioctl(struct ion_client *client,
 
 static int __init exynos_ion_probe(struct platform_device *pdev)
 {
-	ion_exynos = ion_device_create(&exynos_ion_ioctl);
+	ion_exynos = gpu_ion_device_create(&exynos_ion_ioctl);
 	if (IS_ERR_OR_NULL(ion_exynos)) {
 		kfree(heaps);
 		return PTR_ERR(ion_exynos);
@@ -1309,7 +1309,7 @@ static int __exit exynos_ion_remove(struct platform_device *pdev)
 	struct ion_device *idev = platform_get_drvdata(pdev);
 	int i;
 
-	ion_device_destroy(idev);
+	gpu_ion_device_destroy(idev);
 	for (i = 0; i < num_heaps; i++)
 		__ion_heap_destroy(heaps[i]);
 	kfree(heaps);
@@ -1407,15 +1407,15 @@ static struct exynos_ion_contig_region
 static int __init __fdt_init_exynos_ion(unsigned long node, const char *uname,
 				      int depth, void *data)
 {
-	__be32 *prop;
+	const __be32 *prop;
 	char *pch, *cch;
-	unsigned long len = 0;
+	int len = 0;
 	int i = 0;
 
 	if (!of_flat_dt_is_compatible(node, "samsung,exynos5430-ion"))
 		return 0;
 
-	prop = of_get_flat_dt_prop(node, "contig-names", &len);
+	prop = of_get_flat_dt_prop(node, (const char *)"contig-names", &len);
 	if (!prop)
 		return 0;
 
@@ -1432,17 +1432,17 @@ static int __init __fdt_init_exynos_ion(unsigned long node, const char *uname,
 		pch += strlen(pch) + 1; /* number of char plus NULL */
 	}
 
-	prop = of_get_flat_dt_prop(node, "contig", &len);
+	prop = of_get_flat_dt_prop(node, (const char *) "contig", &len);
 
 	/* <id size base> */
-	if (!prop || (len != (unsigned long)i * 3 * sizeof(long))) {
+	if (!prop || (len != i * 3 * sizeof(int))) {
 		pr_err("%s: Different number in 'contig-names' and 'contig'!\n",
 			__func__);
 		return 0;
 	}
 
-	len /= sizeof(long);
-	for (i = 0; (unsigned long)i < len; i += 3) {
+	len /= sizeof(int);
+	for (i = 0; i < len; i += 3) {
 		if (be32_to_cpu(prop[i]) >= EXYNOS_ION_CONTIG_ID_NUM) {
 			pr_err("%s: Too big region ID %d\n",
 				__func__, be32_to_cpu(prop[i]));
@@ -1464,9 +1464,9 @@ static int __init __fdt_init_exynos_ion(unsigned long node, const char *uname,
 		contig_region_cursor++;
 	}
 
-	prop = of_get_flat_dt_prop(node, "contig-isolate_on_boot", &len);
+	prop = of_get_flat_dt_prop(node, (const char *)"contig-isolate_on_boot", &len);
 	/* <id> */
-	for (i = 0; prop && (unsigned long)i < (len / sizeof(long)); i++) {
+	for (i = 0; prop && i < (len / sizeof(int)); i++) {
 		int id;
 		int j;
 
@@ -1481,8 +1481,8 @@ static int __init __fdt_init_exynos_ion(unsigned long node, const char *uname,
 
 	}
 #ifndef CONFIG_MFC_TRELTE
-	prop = of_get_flat_dt_prop(node, "secure", &len);
-	for (i = 0; prop && (unsigned long)i < (len / sizeof(long)); i++) {
+	prop = of_get_flat_dt_prop(node, (const char *)"secure", &len);
+	for (i = 0; prop && i < (len / sizeof(int)); i++) {
 		int id;
 		int j;
 

@@ -380,6 +380,15 @@ void __iomem *ioremap(resource_size_t res_cookie, size_t size)
 }
 EXPORT_SYMBOL(ioremap);
 
+//ijh resurrect for legacy
+void __iomem *
+__arm_ioremap(phys_addr_t phys_addr, size_t size, unsigned int mtype)
+{
+	return arch_ioremap_caller(phys_addr, size, mtype,
+		__builtin_return_address(0));
+}
+EXPORT_SYMBOL(__arm_ioremap);
+
 void __iomem *ioremap_cache(resource_size_t res_cookie, size_t size)
 	__alias(ioremap_cached);
 
@@ -462,6 +471,12 @@ void iounmap(volatile void __iomem *cookie)
 	arch_iounmap(cookie);
 }
 EXPORT_SYMBOL(iounmap);
+// ijh resurrect legacy function
+void __arm_iounmap(volatile void __iomem *io_addr)
+{
+	arch_iounmap(io_addr);
+}
+EXPORT_SYMBOL(__arm_iounmap);
 
 #ifdef CONFIG_PCI
 static int pci_ioremap_mem_type = MT_DEVICE;
