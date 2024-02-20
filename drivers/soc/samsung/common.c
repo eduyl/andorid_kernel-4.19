@@ -1552,7 +1552,8 @@ static inline void exynos_irq_demux_eint(unsigned int start)
 
 static void exynos_irq_demux_eint16_31(struct irq_desc *desc)
 {
-	struct irq_chip *chip = irq_get_chip(desc->parent_irq); // TODO: Is parent_irq the right irq ?
+	unsigned int irq = irq_desc_get_irq(desc);
+	struct irq_chip *chip = irq_get_chip(irq);
 	chained_irq_enter(chip, desc);
 	exynos_irq_demux_eint(IRQ_EINT(16));
 	exynos_irq_demux_eint(IRQ_EINT(24));
@@ -1561,8 +1562,9 @@ static void exynos_irq_demux_eint16_31(struct irq_desc *desc)
 
 static void exynos_irq_eint0_15(struct irq_desc *desc)
 {
-	u32 *irq_data = irq_get_handler_data(desc->parent_irq); //TODO : Is parent_irq the right irq ?
-	struct irq_chip *chip = irq_get_chip(desc->parent_irq);
+	unsigned int irq = irq_desc_get_irq(desc);
+	u32 *irq_data = irq_get_handler_data(irq); //TODO : Is parent_irq the right irq ?
+	struct irq_chip *chip = irq_get_chip(irq);
 
 	chained_irq_enter(chip, desc);
 	generic_handle_irq(*irq_data);

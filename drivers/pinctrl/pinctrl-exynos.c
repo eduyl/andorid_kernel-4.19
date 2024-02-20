@@ -200,13 +200,14 @@ static struct irq_chip exynos_gpio_irq_chip = {
 static int exynos_gpio_irq_map(struct irq_domain *h, unsigned int virq,
 					irq_hw_number_t hw)
 {
+	unsigned long clr = 0, set = IRQ_NOREQUEST | IRQ_NOPROBE | IRQ_NOAUTOEN;
+
 	struct samsung_pin_bank *b = h->host_data;
 
 	irq_set_chip_data(virq, b);
 	irq_set_chip_and_handler(virq, &exynos_gpio_irq_chip,
 					handle_level_irq);
-	//TODO: ijh What did this achieve?
-	//set_irq_flags(virq, IRQF_VALID);
+	irq_modify_status(virq, clr, set & ~clr);
 	return 0;
 }
 
@@ -471,7 +472,8 @@ static struct irq_chip exynos_wkup_irq_chip = {
 /* interrupt handler for wakeup interrupts 0..15 */
 static void exynos_irq_eint0_15(struct irq_desc *desc)
 {
-	struct exynos_weint_data *eintd = irq_get_handler_data(desc->parent_irq); // TODO: ijh check parent_irq usage
+	unsigned int irq = irq_desc_get_irq(desc);
+	struct exynos_weint_data *eintd = irq_get_handler_data(irq);
 	struct samsung_pin_bank *bank = eintd->bank;
 	struct irq_chip *chip = irq_get_chip(desc->parent_irq);
 	int eint_irq;
@@ -503,8 +505,9 @@ static inline void exynos_irq_demux_eint(unsigned long pend,
 /* interrupt handler for wakeup interrupt 16 */
 static void exynos_irq_demux_eint16_31(struct irq_desc *desc)
 {
-	struct irq_chip *chip = irq_get_chip(desc->parent_irq); // TODO: ijh check parent_irq usage
-	struct exynos_muxed_weint_data *eintd = irq_get_handler_data(desc->parent_irq);
+	unsigned int irq = irq_desc_get_irq(desc);
+	struct irq_chip *chip = irq_get_chip(irq);
+	struct exynos_muxed_weint_data *eintd = irq_get_handler_data(irq);
 	struct samsung_pinctrl_drv_data *d = eintd->banks[0]->drvdata;
 	struct samsung_pin_ctrl *ctrl = d->ctrl;
 	void __iomem *reg_base;
@@ -530,9 +533,10 @@ static void exynos_irq_demux_eint16_31(struct irq_desc *desc)
 static int exynos_wkup_irq_map(struct irq_domain *h, unsigned int virq,
 					irq_hw_number_t hw)
 {
+	unsigned long clr = 0, set = IRQ_NOREQUEST | IRQ_NOPROBE | IRQ_NOAUTOEN;
 	irq_set_chip_and_handler(virq, &exynos_wkup_irq_chip, handle_level_irq);
 	irq_set_chip_data(virq, h->host_data);
-	//set_irq_flags(virq, IRQF_VALID); // TODO: ijh what was this to achieve?
+	irq_modify_status(virq, clr, set & ~clr);
 	return 0;
 }
 
