@@ -1,4 +1,61 @@
 # SPDX-License-Identifier: GPL-2.0
+dtb-$(CONFIG_BOARD_GTS28WIFI) += \
+	exynos5433-gts28wifi_eur_open_05.dtb \
+	exynos5433-gts28wifi_eur_open_06.dtb
+
+dtb-$(CONFIG_BOARD_GTS28LTEXX) += \
+	exynos5433-gts28_eur_open_03.dtb \
+	exynos5433-gts28_eur_open_04.dtb \
+	exynos5433-gts28_eur_open_05.dtb \
+	exynos5433-gts28_eur_open_06.dtb \
+	exynos5433-gts28_eur_open_09.dtb
+
+dtb-$(CONFIG_BOARD_GTS210WIFI) += \
+	exynos5433-gts210wifi_eur_open_04.dtb \
+	exynos5433-gts210wifi_eur_open_05.dtb \
+	exynos5433-gts210wifi_eur_open_06.dtb
+
+dtb-$(CONFIG_BOARD_GTS210LTEXX) += \
+	exynos5433-gts210_eur_open_03.dtb \
+	exynos5433-gts210_eur_open_04.dtb \
+	exynos5433-gts210_eur_open_05.dtb \
+	exynos5433-gts210_eur_open_06.dtb
+
+dtb-$(CONFIG_BOARD_TRELTEXX) += \
+	exynos5433-tre_eur_open_07.dtb \
+	exynos5433-tre_eur_open_08.dtb \
+	exynos5433-tre_eur_open_09.dtb \
+	exynos5433-tre_eur_open_10.dtb \
+	exynos5433-tre_eur_open_12.dtb \
+	exynos5433-tre_eur_open_13.dtb \
+	exynos5433-tre_eur_open_14.dtb \
+	exynos5433-tre_eur_open_16.dtb 
+
+dtb-$(CONFIG_BOARD_TRELTESKT) += \
+	exynos5433-trelte_kor_open_06.dtb\
+	exynos5433-trelte_kor_open_07.dtb \
+	exynos5433-trelte_kor_open_09.dtb \
+	exynos5433-trelte_kor_open_11.dtb \
+	exynos5433-trelte_kor_open_12.dtb
+
+ dtb-$(CONFIG_BOARD_TRHPLTEXX) += \
+	exynos5433-trlte_eur_open_00.dtb \
+	exynos5433-trlte_eur_open_09.dtb \
+	exynos5433-trlte_eur_open_10.dtb \
+	exynos5433-trlte_eur_open_11.dtb \
+	exynos5433-trlte_eur_open_12.dtb
+
+dtb-$(CONFIG_BOARD_TBELTESKT) += \
+	exynos5433-tbelte_kor_open_07.dtb \
+	exynos5433-tbelte_kor_open_09.dtb \
+	exynos5433-tbelte_kor_open_11.dtb \
+	exynos5433-tbelte_kor_open_12.dtb \
+	exynos5433-tbelte_kor_open_14.dtb
+
+dtb-$(CONFIG_BOARD_TRE3CALTESKT) += \
+	exynos5433-tre3calte_kor_open_05.dtb \
+	exynos5433-tre3calte_kor_open_14.dtb
+
 dtb-$(CONFIG_ARCH_ALPINE) += \
 	alpine-db.dtb
 dtb-$(CONFIG_MACH_ARTPEC6) += \
