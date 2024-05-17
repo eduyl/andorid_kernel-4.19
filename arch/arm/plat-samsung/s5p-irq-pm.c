@@ -41,6 +41,7 @@ int s3c_irq_wake(struct irq_data *data, unsigned int state)
 	unsigned int irq_rtc_tic, irq_rtc_alarm;
 
 #ifdef CONFIG_ARCH_EXYNOS
+	#ifdef CONFIG_SOC_EXYNOS5250
 	if (soc_is_exynos5250()) {
 		irq_rtc_tic = EXYNOS5_IRQ_RTC_TIC;
 		irq_rtc_alarm = EXYNOS5_IRQ_RTC_ALARM;
@@ -48,6 +49,10 @@ int s3c_irq_wake(struct irq_data *data, unsigned int state)
 		irq_rtc_tic = EXYNOS4_IRQ_RTC_TIC;
 		irq_rtc_alarm = EXYNOS4_IRQ_RTC_ALARM;
 	}
+	#else
+		irq_rtc_tic = EXYNOS4_IRQ_RTC_TIC;
+		irq_rtc_alarm = EXYNOS4_IRQ_RTC_ALARM;
+	#endif
 #else
 	irq_rtc_tic = IRQ_RTC_TIC;
 	irq_rtc_alarm = IRQ_RTC_ALARM;
