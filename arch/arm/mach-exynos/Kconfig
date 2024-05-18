@@ -42,6 +42,29 @@ menuconfig ARCH_EXYNOS
 
 if ARCH_EXYNOS
 
+config ARCH_EXYNOS5
+	bool "SAMSUNG EXYNOS5"
+	select HAVE_ARM_SCU if SMP
+	select HAVE_SMP
+	select HAVE_EXYNOS5_HSI2C if I2C
+	help
+	  Samsung EXYNOS5 (Cortex-A15) SoC based systems
+
+config MACH_UNIVERSAL5433
+	bool "SAMSUNG UNIVERSAL5433 Machine using device tree"
+	default y
+	depends on ARCH_EXYNOS5 && SOC_EXYNOS5433
+	select ARM_AMBA
+	select CLKSRC_OF
+	select PINCTRL
+	select PINCTRL_EXYNOS
+	select USE_OF
+	select MIGHT_HAVE_PCI
+	select PCI_DOMAINS if PCI
+	help
+	  Machine support for Samsung EXYNOS5433 machine with device tree enabled.
+	  Select this if a fdt blob is available for the EXYNOS5433 SoC based board.
+
 config S5P_DEV_MFC
 	bool
 	help
@@ -201,3 +224,221 @@ config EXYNOS_CORESIGHT_MAINTAIN_DBG_REG
 	  save in /restore from memory. If OS-lock is set, debugging to use
 	  trace32 is impossible. So OS-lock must clear when core power is up.
 	  This config must enable only using iTSP program.
+
+config SAMSUNG_PRODUCT_SHIP
+	bool "set up for product shipping"
+	default n
+
+config BOARD_GTS28WIFI
+	bool "Samsung Tab S2 8.0 WIFI"
+	default n
+	
+config BOARD_GTS28LTEXX
+	bool "Samsung Tab S2 8.0 LTE"
+	default n
+	
+config BOARD_GTS210WIFI
+	bool "Samsung Tab S2 9.7 WIFI"
+	default n
+
+config BOARD_GTS210LTEXX
+	bool "Samsung Tab S2 9.7 LTE"
+	default n
+
+config BOARD_TRELTEXX
+	bool "Samsung Galaxy N4 LTE (N910C/H)"
+	default n
+
+config BOARD_TRHPLTEXX
+	bool "Samsung Galaxy N4 LTE (N910U)"
+	default n
+
+config BOARD_TRELTESKT
+	bool "Samsung Galaxy N4 LTE SKT (N910S/L/K)"
+	default n
+
+config BOARD_TBELTESKT
+	bool "Samsung Galaxy N4 EDGE LTE SKT (N915S/L/K)"
+	default n
+
+config BOARD_TRE3CALTESKT
+	bool "Samsung Galaxy N4 S-LTE SKT (N916S/L/K)"
+	default n
+
+choice
+	prompt "Target Locale"
+	default TARGET_LOCALE_EUR
+
+config TARGET_LOCALE_EUR
+	bool "Europe Open"
+
+config TARGET_LOCALE_KOR
+	bool "Kor"
+endchoice
+
+config EXYNOS5_DYNAMIC_CPU_HOTPLUG
+	bool "Dynamic CPU Hotplug support"
+	depends on CPU_FREQ
+	help
+		Enable Dynamic CPU Hotplug
+
+config EXYNOS5_SETUP_MIPIPHY
+	bool
+	depends on (VIDEO_EXYNOS_FIMC_IS || DECON_MIPI_DSI)
+	default y
+	help
+	  Compile in common setup code for MIPI-CSIS devices
+
+config EXYNOS_CONTENT_PATH_PROTECTION
+	bool "Exynos Content Path Protection"
+	depends on (ARM_TRUSTZONE && ARCH_EXYNOS5)
+	default y
+	help
+	  Enable content path protection of EXYNOS.
+
+config EXYNOS5_DYNAMIC_CPU_HOTPLUG_SLEEP_PREPARE
+        int "Activate number of cores when sleep"
+        depends on EXYNOS5_DYNAMIC_CPU_HOTPLUG
+        default 1
+        help
+          When gose to sleep, activate some cores for performace
+          during sleep/wakeup sequence.
+          This config set the number of activate cores.
+          defaut value is "4" to activate all cores in cluster0.
+
+config EXYNOS5433_CORE_FEEDBACK_CHECK_DISABLE
+	bool "Disable checking core feedback"
+	default n
+	help
+	  Disable checking core feedback
+
+config EXYNOS5433_ASV_NEON_WORKAROUND
+	bool "Increase voltage for ATL 900 / 800 / 700"
+	default n
+	help
+	  Increase ATL voltage
+
+config TIMA
+	bool "Enable TIMA(Trustzone based Integrity Measurement Archtecture feature"
+	default n
+
+config TIMA_LKMAUTH
+	bool "Enable LKM authentication by TIMA"
+	help
+	   TIMA authenticates loaded kernel modules. Disable it if you don't 
+	   want TIMA enabled.
+
+config TIMA_RKP
+	bool "Enable RKP (Realtime Kernel Protection) TIMA feature"
+	depends on TIMA
+	default n
+
+config RKP_DBLMAP_PROT
+	bool "Page Double Mapping protection"
+	depends on TIMA_RKP
+	default n
+	help
+	  Prevents unauthorized cred modification.
+
+config HYP_RKP
+	bool "Enable Hypervisor RKP"
+	depends on TIMA_RKP
+	default n
+
+config TIMA_RKP_30
+	bool "Enable RKP (Realtime Kernel Protection) TIMA 3.0 feature"
+	depends on TIMA_RKP
+	default y
+	help
+		TIMA RKP 30 features, including kernel fault fixup and optimized tima_pg_is_protected
+
+config KNOX_KAP
+       bool "Enable KNOX KAP mode"
+       default n
+       help 
+              Knox Active Protection mode
+
+config TIMA_RKP_L1_TABLES
+	bool
+	depends on TIMA_RKP
+	default y
+	help
+	  TIMA taking over management of L1 tables.
+
+config TIMA_RKP_L2_TABLES
+	bool "Enable TIMA RKP L2 Tables"
+	depends on TIMA_RKP
+	default n
+	help
+	  TIMA taking over management L2 tables too.
+
+config TIMA_RKP_L2_GROUP
+	bool
+	depends on TIMA_RKP_L2_TABLES
+	default n
+	help
+	  TIMA grouping page table writes
+
+config TIMA_RKP_LAZY_MMU
+	bool
+	depends on TIMA_RKP_L2_TABLES
+	default	y 
+	help
+	  TIMA lazy MMU for L2 pages
+
+config TIMA_IOMMU_OPT
+	bool "Enable TIMA IOMMU OPT"
+	depends on TIMA_RKP_L2_TABLES
+	default	n
+	help
+	  TIMA IOMMU optimization for L2 pages
+	
+config TIMA_KMAP_OPT
+	bool "Enable TIMA KMAP OPT"
+	depends on TIMA_RKP_L2_TABLES
+	default	n
+	help
+	  TIMA KMAP optimization for L2 pages
+
+config TIMA_DALVIKHEAP_OPT
+	bool "Enable TIMA DALVIKHEAP OPT"
+	depends on TIMA_RKP_L2_TABLES
+	default	n 
+	help
+	  TIMA DALVIK HEAP optimization for L2 pages
+
+config TIMA_RKP_DEBUG
+	bool "Enable TIMA RKP Debug"
+	depends on TIMA_RKP
+	default n
+	help
+	  not workable in  K3G right now, no code ported in for this part.TIMA debug infrastructure.
+
+config TIMA_RKP_KDATA_PROT
+	bool "Protection for kernel data"
+	depends on TIMA_RKP_30
+	depends on TIMA_RKP_L2_TABLES
+	default n
+	help
+		Detects double mapping of kernel data.
+
+config TIMA_RKP_RO_CRED
+	bool "Protection for cred structure"
+	depends on TIMA_RKP_30
+	depends on TIMA_RKP_L2_TABLES
+	default n
+	help
+		Prevents unauthorized cred modification.
+
+config TIMA_LKMAUTH_CODE_PROT
+	bool "Support Kernel Module"
+	depends on MODULES
+	default n
+	help
+	  Support Kernel Module
+
+config TIMA_TEST_INFRA
+	tristate "Testing infrastructure for TIMA"
+	default n
+	help
+	  Kernel bits of the TIMA test infrastructure	  
