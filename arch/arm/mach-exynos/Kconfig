@@ -192,6 +192,30 @@ config EXYNOS5433_BTS
 	help
 	  Enable BTS (Bus traffic shaper) support
 
+# Reset IPs during LPA/DSTOP
+config EXYNOS_HSI2C_RESET_DURING_DSTOP
+	bool
+
+config EXYNOS_I2C_RESET_DURING_DSTOP
+	bool
+
+config EXYNOS_SPI_RESET_DURING_DSTOP
+	bool
+
+config EXYNOS_ADC_RESET_DURING_DSTOP
+	bool
+
+config EXYNOS_PWM_RESET_DURING_DSTOP
+	bool
+
+config EXYNOS_TMU_RESET_DURING_DSTOP
+	bool
+
+config EXYNOS_HDMI_RESET_DURING_DSTOP
+	bool
+
+config EXYNOS_TOP_RTC_RESET_DURING_DSTOP
+	bool
 endif
 
 menuconfig EXYNOS_CORESIGHT
@@ -295,28 +319,6 @@ config EXYNOS_CONTENT_PATH_PROTECTION
 	default y
 	help
 	  Enable content path protection of EXYNOS.
-
-config EXYNOS5_DYNAMIC_CPU_HOTPLUG_SLEEP_PREPARE
-        int "Activate number of cores when sleep"
-        depends on EXYNOS5_DYNAMIC_CPU_HOTPLUG
-        default 1
-        help
-          When gose to sleep, activate some cores for performace
-          during sleep/wakeup sequence.
-          This config set the number of activate cores.
-          defaut value is "4" to activate all cores in cluster0.
-
-config EXYNOS5433_CORE_FEEDBACK_CHECK_DISABLE
-	bool "Disable checking core feedback"
-	default n
-	help
-	  Disable checking core feedback
-
-config EXYNOS5433_ASV_NEON_WORKAROUND
-	bool "Increase voltage for ATL 900 / 800 / 700"
-	default n
-	help
-	  Increase ATL voltage
 
 config TIMA
 	bool "Enable TIMA(Trustzone based Integrity Measurement Archtecture feature"
@@ -442,3 +444,36 @@ config TIMA_TEST_INFRA
 	default n
 	help
 	  Kernel bits of the TIMA test infrastructure	  
+
+config SEC_BAT_AUT
+	bool "Samsung TN Bat Automation Test Feature"
+	default n
+	help
+	  Samsung TN Bat Automation Test
+config DISABLE_C2_BOOT
+	bool "Disable C2 Boot"
+	default n
+	help
+	  Support C2 Disable Boot
+
+config EXYNOS5_DYNAMIC_CPU_HOTPLUG_SLEEP_PREPARE
+        int "Activate number of cores when sleep"
+        depends on EXYNOS5_DYNAMIC_CPU_HOTPLUG
+        default 1
+        help
+          When gose to sleep, activate some cores for performace
+          during sleep/wakeup sequence.
+          This config set the number of activate cores.
+          defaut value is "4" to activate all cores in cluster0.
+
+config EXYNOS5433_CORE_FEEDBACK_CHECK_DISABLE
+	bool "Disable checking core feedback"
+	default n
+	help
+	  Disable checking core feedback
+
+config EXYNOS5433_ASV_NEON_WORKAROUND
+	bool "Increase voltage for ATL 900 / 800 / 700"
+	default n
+	help
+	  Increase ATL voltage
