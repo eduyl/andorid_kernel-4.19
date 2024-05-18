@@ -9,7 +9,7 @@ obj-y				:=
 obj-m				:=
 obj-n				:=
 obj-				:=
-ccflags-y += -I$(srctree)/arch/arm/mach-exynos/include -I$(srctree)/arch/arm/plat-samsung/include
+ccflags-y += -I$(srctree)/drivers/soc/samsung/include -I$(srctree)/arch/arm/mach-exynos/include -I$(srctree)/arch/arm/plat-samsung/include
 
 obj-$(CONFIG_BATTERY_SAMSUNG)	+= sec_batt.o
 # Samsung Debug Feature

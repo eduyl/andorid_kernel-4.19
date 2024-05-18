@@ -96,7 +96,7 @@ extern void release_thread(struct task_struct *);
 unsigned long get_wchan(struct task_struct *p);
 
 #define task_pt_regs(p) \
-	((struct pt_regs *)(THREAD_START_SP + task_stack_page(p)) - 1)
+	((struct pt_regs *)(THREAD_START_SP + ((void*) (p)->stack)) - 1)
 
 #define KSTK_EIP(tsk)	task_pt_regs(tsk)->ARM_pc
 #define KSTK_ESP(tsk)	task_pt_regs(tsk)->ARM_sp

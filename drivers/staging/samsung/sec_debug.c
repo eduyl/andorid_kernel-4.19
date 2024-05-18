@@ -2,7 +2,7 @@
  *  sec_debug.c
  *
  */
-
+#include <linux/irq.h>
 #include <linux/errno.h>
 #include <linux/ctype.h>
 #include <linux/notifier.h>
@@ -13,6 +13,7 @@
 #include <asm/cacheflush.h>
 #include <asm/io.h>
 #include <linux/sched.h>
+#include <linux/sched/clock.h>
 #include <linux/smp.h>
 #include <linux/slab.h>
 #include <linux/spinlock.h>
@@ -32,6 +33,7 @@
 #include <mach/regs-clock.h>
 #include <plat/map-base.h>
 #include <plat/map-s5p.h>
+#include <mach/map.h>
 #include <asm/mach/map.h>
 #include <plat/regs-watchdog.h>
 #include <linux/seq_file.h>
@@ -163,9 +165,9 @@ struct rwsem_debug {
       0x4000: copy of magic
  */
 #if defined(CONFIG_SPARSEMEM)
-#define SEC_DEBUG_MAGIC_PA (S5P_PA_SDRAM)
+#define SEC_DEBUG_MAGIC_PA (0x20000000)//(S5P_PA_SDRAM)
 #else
-#define SEC_DEBUG_MAGIC_PA S5P_PA_SDRAM
+#define SEC_DEBUG_MAGIC_PA 0x20000000 //S5P_PA_SDRAM
 #endif
 #define SEC_DEBUG_MAGIC_VA phys_to_virt(SEC_DEBUG_MAGIC_PA)
 
@@ -725,8 +727,8 @@ void sec_debug_show_regs_simple(struct pt_regs *regs)
 	unsigned long flags;
 	char buf[64];
 
-	print_symbol("PC is at %s\n", instruction_pointer(regs));
-	print_symbol("LR is at %s\n", regs->ARM_lr);
+	sprint_symbol("PC is at %s\n", instruction_pointer(regs));
+	sprint_symbol("LR is at %s\n", regs->ARM_lr);
 	pr_alert("pc : [<%08lx>]    lr : [<%08lx>]    psr: %08lx\n"
 	       "sp : %08lx  ip : %08lx  fp : %08lx\n",
 		regs->ARM_pc, regs->ARM_lr, regs->ARM_cpsr,
@@ -1548,7 +1550,7 @@ static void dump_one_task_info(struct task_struct *tsk, bool is_main)
 	struct mm_struct *mm;
 
 	permitted = ptrace_may_access(tsk, PTRACE_MODE_READ);
-	mm = get_task_mm(tsk);
+	mm = tsk->mm; //ijh get_task_mm(tsk);
 	if (mm) {
 		if (permitted)
 			pc = KSTK_EIP(tsk);
@@ -1637,7 +1639,12 @@ static void dump_all_task_info(void)
 #ifndef arch_idle_time
 #define arch_idle_time(cpu) 0
 #endif
-
+typedef u64 __nocast cputime_t;
+typedef u64 __nocast cputime64_t;
+#define cputime_to_jiffies(__ct)	(__force unsigned long)(__ct)
+#define cputime_to_clock_t(__ct)	\
+	jiffies_to_clock_t(cputime_to_jiffies(__ct))
+#define cputime64_to_clock_t(ct)	cputime_to_clock_t((cputime_t)(ct))
 static void dump_cpu_stat(void)
 {
 	int i, j;
@@ -1649,6 +1656,8 @@ static void dump_cpu_stat(void)
 	unsigned int per_softirq_sums[NR_SOFTIRQS] = {0};
 	struct timespec boottime;
 	unsigned int per_irq_sum;
+	struct irq_desc *desc;
+	struct irqaction *action;
 
 	char *softirq_to_name[NR_SOFTIRQS] = {
 	     "HI", "TIMER", "NET_TX", "NET_RX", "BLOCK", "BLOCK_IOPOLL",
@@ -1734,9 +1743,11 @@ static void dump_cpu_stat(void)
 		for_each_possible_cpu(i)
 			per_irq_sum += kstat_irqs_cpu(j, i);
 		if (per_irq_sum) {
+			desc = irq_to_desc(j);
+			action = desc->action;
 			pr_info(" irq-%4d : %8u %s\n",
-				j, per_irq_sum, irq_to_desc(j)->action ?
-				irq_to_desc(j)->action->name ?: "???" : "???");
+				j, per_irq_sum, irq_has_action(j) ?
+				action->name ?: "???" : "???");
 		}
 	}
 	pr_info(" -----------------------------------------------------------------------------------\n");

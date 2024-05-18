@@ -2199,3 +2199,8 @@ source "arch/arm/crypto/Kconfig"
 endif
 
 source "arch/arm/kvm/Kconfig"
+
+config ARM_NR_BANKS
+	int
+	default 16 if ARCH_EP93XX || ARCH_EXYNOS
+	default 8

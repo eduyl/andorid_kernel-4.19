@@ -2022,4 +2022,23 @@ static inline void rseq_syscall(struct pt_regs *regs)
 
 #endif
 
+#ifdef CONFIG_SCHED_HMP
+struct hmp_domain {
+	struct cpumask cpus;
+	struct cpumask possible_cpus;
+	struct list_head hmp_domains;
+};
+
+extern int set_hmp_boost(int enable);
+extern int set_hmp_semiboost(int enable);
+extern int set_hmp_boostpulse(int duration);
+extern int get_hmp_boost(void);
+extern int get_hmp_semiboost(void);
+extern int set_hmp_up_threshold(int value);
+extern int set_hmp_down_threshold(int value);
+extern int set_active_down_migration(int enable);
+extern int set_hmp_aggressive_up_migration(int enable);
+extern int set_hmp_aggressive_yield(int enable);
+#endif /* CONFIG_SCHED_HMP */
+
 #endif
