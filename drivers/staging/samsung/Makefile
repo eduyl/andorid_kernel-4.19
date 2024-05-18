@@ -9,7 +9,8 @@ obj-y				:=
 obj-m				:=
 obj-n				:=
 obj-				:=
-ccflags-y += -I$(srctree)/arch/arm/mach-exynos/include
+ccflags-y += -I$(srctree)/arch/arm/mach-exynos/include -I$(srctree)/arch/arm/plat-samsung/include
+
 obj-$(CONFIG_BATTERY_SAMSUNG)	+= sec_batt.o
 # Samsung Debug Feature
 obj-$(CONFIG_SEC_DEBUG)		+= sec_debug.o sec_getlog.o sec_gaf.o
