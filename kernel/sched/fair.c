@@ -11456,31 +11456,4 @@ __init void init_sched_fair_class(void)
 #endif
 #endif /* SMP */
 
-static int hmp_boost_val;
-static DEFINE_RAW_SPINLOCK(hmp_boost_lock);
-static int hmp_boost_from_sysfs(int value)
-{
-	unsigned long flags;
-	int ret = 0;
-
-	raw_spin_lock_irqsave(&hmp_boost_lock, flags);
-	if (value == 1)
-		hmp_boost_val++;
-	else if (value == 0)
-		if (hmp_boost_val >= 1)
-			hmp_boost_val--;
-		else
-			ret = -EINVAL;
-	else
-		ret = -EINVAL;
-	raw_spin_unlock_irqrestore(&hmp_boost_lock, flags);
-
-	return ret;
-}
-
-int set_hmp_boost(int enable)
-{
-	return hmp_boost_from_sysfs(enable);
-}
-
 }
