@@ -11469,7 +11469,7 @@ static int hmp_boost_from_sysfs(int value)
 	else if (value == 0)
 		if (hmp_boost_val >= 1)
 			hmp_boost_val--;
-		else
+	else
 			ret = -EINVAL;
 	else
 		ret = -EINVAL;
