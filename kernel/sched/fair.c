@@ -11457,8 +11457,6 @@ __init void init_sched_fair_class(void)
 #endif /* SMP */
 
 static int hmp_boost_val;
-
-void init_sched_fair_class(void) {
 static DEFINE_RAW_SPINLOCK(hmp_boost_lock);
 static int hmp_boost_from_sysfs(int value)
 {
@@ -11483,8 +11481,6 @@ static int hmp_boost_from_sysfs(int value)
 int set_hmp_boost(int enable)
 {
 	return hmp_boost_from_sysfs(enable);
-}
-
 }
 
 }
