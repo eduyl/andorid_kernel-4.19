@@ -7,6 +7,7 @@
 #include <linux/uaccess.h>
 #include <linux/proc_fs.h>
 #include <linux/memblock.h>
+#include <linux/clocksource.h>
 
 #include <linux/sec_debug.h>
 #include <plat/map-base.h>
